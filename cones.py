@@ -74,6 +74,10 @@ def get_delta(a,z0,two_theta):
     return deltaP
 
 def rotate_point(x,y,x0,y0,phi):
+    """
+    Rotate point (x,y) around center (x0,y0) by phi [radians].
+    Returns new coordinates (x_new,y_new).
+    """
 
     x -= x0
     y -= y0
@@ -88,7 +92,7 @@ def rotate_point(x,y,x0,y0,phi):
 
 two_theta = pi/8
 
-params = (1,2,4,3,0*pi/4)
+params = (1,2,4,3,1*pi/4)
 cx,cy,a,b,phi = params
 ex,ey = el.get_ellipse_pts(params)
 
@@ -101,27 +105,49 @@ V = np.array([0,0,0]).astype(float)
 V[0] = cx+s+z0*sin(delta)
 V[1] = cy
 V[2] = z0*cos(delta)
+# Rotate cone apex by phi around ellipse center
+V[0],V[1] = rotate_point(V[0],V[1],cx,cy,phi)
+# Calculate direction of cone axis
 n = np.array([sin(delta),0,cos(delta)])
+# Rotate this vector around origin (it is a vector)
+n[0],n[1] = rotate_point(n[0],n[1],0,0,phi)
+print("|n| = ",n[0]**2+n[1]**2+n[2]**2)
 
-# Rotate V:
-# V[0],V[1] = rotate_point(V[0],V[1],cx,cy,phi)
-# n[0],n[1] = rotate_point(n[0],n[1],cx,cy,phi)
+# Find coordinates of point where cone axis intersects plane z=0
+S = np.array([V[0]-V[2]*n[0]/n[2],V[1]-V[2]*n[1]/n[2],0])
 
-# S should be calculated from n_x,n_y
-S = np.array([V[0]-V[2]*tan(delta),cy,0])
 
+# Calculate coordinates of rotated major axis
+Am = [cx-a,cy,0]
+Am[0],Am[1] = rotate_point(Am[0],Am[1],cx,cy,phi)
+Ap = [cx+a,cy,0]
+Ap[0],Ap[1] = rotate_point(Ap[0],Ap[1],cx,cy,phi)
+
+# Calculate coordinates of rotated minor axis
+Bm = [cx,cy-b,0]
+Bm[0],Bm[1] = rotate_point(Bm[0],Bm[1],cx,cy,phi)
+Bp = [cx,cy+b,0]
+Bp[0],Bp[1] = rotate_point(Bp[0],Bp[1],cx,cy,phi)
+
+# Find point where cone 
+
+# Plot all the data ------------------------------------------------------------
 fig = plt.figure()
 ax = fig.add_subplot(111,projection='3d')
 
+# Plot ellipse
 ax.plot(ex,ey)
+# Plot points
 ax.plot(V[0],V[1],V[2],'.',color='k',markersize=10)
 ax.plot(cx,cy,0,'.',color='k',markersize=10)
 ax.plot(S[0],S[1],S[2],'.',color='k',markersize=10)
 t = np.array([-5,5])
 
+
 ax.plot([V[0],S[0]],[V[1],S[1]],[V[2],S[2]],c='k',ls='--')
-ax.plot([cx-a,cx+a],[cy,cy],[0,0],c=plt_clrs[1],ls='--')
-ax.plot([cx,cx],[cy-b,cy+b],[0,0],c=plt_clrs[2],ls='--')
+ax.plot([Am[0],Ap[0]],[Am[1],Ap[1]],[Am[2],Ap[2]],c=plt_clrs[1],ls='--')
+ax.plot([Bm[0],Bp[0]],[Bm[1],Bp[1]],[Bm[2],Bp[2]],c=plt_clrs[2],ls='--')
+
 ax.plot([V[0],V[0]+V[2]*tan(two_theta-delta)],[V[1],cy],[V[2],0],c=plt_clrs[1])
 ax.plot([V[0],V[0]-V[2]*tan(two_theta+delta)],[V[1],cy],[V[2],0],c=plt_clrs[1])
 ax.plot([V[0],cx],[V[1],cy-z0*tan(two_theta)],[V[2],0],c=plt_clrs[2])
