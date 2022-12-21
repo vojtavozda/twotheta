@@ -33,6 +33,10 @@ different `two_theta` but same apex `V`, `z0`, `delta` and `phi`. Appropriate
 ellipses for these cones are compared to experimental data and sums of squares
 are calculated. The function returns total sum of squares and tries to find cone
 parameters (V,z0,delta,phi) so this total sum is minimized.
+
+Tips
+----
+
 """
 
 # two_theta = pi/8
@@ -114,8 +118,10 @@ def rotate_point(x,y,x0,y0,phi):
     return x_new, y_new
 
 # Define primary ellipse for which we find a cone -------
-two_theta = pi/8
+two_theta = 40/180*pi
 params = (1,2,4,3,1*pi/4)
+params = (283,658,486,292,0.27) # Fit of ellipse0
+params = (281,761,571,400,0.34) # Fit of ellipse1
 # -------------------------------------------------------
 cx,cy,a,b,phi = params
 ex,ey = el.get_ellipse_pts(params)
@@ -169,7 +175,7 @@ cone_z = S[2]-n[2]*c + r*cos(t)*a[2] + r*sin(t)*b[2]
 
 # Find new ellipse for secondary cone with different two_theta -----------------
 # All these equations are taken from above but solve for new ellipse params
-two_theta2 = two_theta*0.2
+two_theta2 = 45/180*pi
 b2 = z0*tan(two_theta2)
 s2 = z0*sin(two_theta2)/2*(1/cos(two_theta2+delta)-1/(cos(two_theta2-delta)))
 V2 = V.copy()
@@ -204,6 +210,8 @@ cone2_y = S[1]-n[1]*c + r*cos(t)*a2[1] + r*sin(t)*b2[1]
 cone2_z = S[2]-n[2]*c + r*cos(t)*a2[2] + r*sin(t)*b2[2]
 
 # Plot all the data ============================================================
+lw1 = 2
+lw2 = 1
 fig = plt.figure()
 ax = fig.add_subplot(111,projection='3d')
 ax.set_proj_type('ortho',None) # persp,0.1
@@ -214,30 +222,30 @@ ax.plot(S[0],S[1],S[2],'.',color='k',markersize=10)     # S  - cone axis
 ax.plot([V[0],S[0]],[V[1],S[1]],[V[2],S[2]],c='k',ls='--')
 
 # Plot primary ellipse ---------------------------------------------------------
-ax.plot(ex,ey,c=plt_clrs[0])
+ax.plot(ex,ey,c=plt_clrs[0],lw=lw1)
 ax.plot(cx,cy,0,'.',color=plt_clrs[0],markersize=10)    # S0 - ellipse center
 t = np.array([-5,5])
 
-ax.plot([Am[0],Ap[0]],[Am[1],Ap[1]],[Am[2],Ap[2]],c=plt_clrs[0],ls='--')
-ax.plot([Bm[0],Bp[0]],[Bm[1],Bp[1]],[Bm[2],Bp[2]],c=plt_clrs[0],ls='--')
+ax.plot([Am[0],Ap[0]],[Am[1],Ap[1]],[Am[2],Ap[2]],c=plt_clrs[0],ls='--',lw=lw2)
+ax.plot([Bm[0],Bp[0]],[Bm[1],Bp[1]],[Bm[2],Bp[2]],c=plt_clrs[0],ls='--',lw=lw2)
 
-ax.plot(cone_x,cone_y,cone_z,c=plt_clrs[2])
+ax.plot(cone_x,cone_y,cone_z,c=plt_clrs[2],lw=lw2)
 
-ax.plot([V[0],Ap[0]],[V[1],Ap[1]],[V[2],Ap[2]],c=plt_clrs[2])
-ax.plot([V[0],Am[0]],[V[1],Am[1]],[V[2],Am[2]],c=plt_clrs[2])
-ax.plot([V[0],Bp[0]],[V[1],Bp[1]],[V[2],Bp[2]],c=plt_clrs[2])
-ax.plot([V[0],Bm[0]],[V[1],Bm[1]],[V[2],Bm[2]],c=plt_clrs[2])
+ax.plot([V[0],Ap[0]],[V[1],Ap[1]],[V[2],Ap[2]],c=plt_clrs[2],lw=lw2)
+ax.plot([V[0],Am[0]],[V[1],Am[1]],[V[2],Am[2]],c=plt_clrs[2],lw=lw2)
+ax.plot([V[0],Bp[0]],[V[1],Bp[1]],[V[2],Bp[2]],c=plt_clrs[2],lw=lw2)
+ax.plot([V[0],Bm[0]],[V[1],Bm[1]],[V[2],Bm[2]],c=plt_clrs[2],lw=lw2)
 
 # Plot secondary ellipse -------------------------------------------------------
-ax.plot(ex2,ey2,c=plt_clrs[3])
+ax.plot(ex2,ey2,c=plt_clrs[3],lw=lw1)
 ax.plot(cx2,cy2,0,'.',color=plt_clrs[3],markersize=10)    # S0 - ellipse center
-ax.plot(cone2_x,cone2_y,cone2_z,c=plt_clrs[1])
-ax.plot([Am2[0],Ap2[0]],[Am2[1],Ap2[1]],[Am2[2],Ap2[2]],c=plt_clrs[3],ls='--')
-ax.plot([Bm2[0],Bp2[0]],[Bm2[1],Bp2[1]],[Bm2[2],Bp2[2]],c=plt_clrs[3],ls='--')
-ax.plot([V[0],Ap2[0]],[V[1],Ap2[1]],[V[2],Ap2[2]],c=plt_clrs[1])
-ax.plot([V[0],Am2[0]],[V[1],Am2[1]],[V[2],Am2[2]],c=plt_clrs[1])
-ax.plot([V[0],Bp2[0]],[V[1],Bp2[1]],[V[2],Bp2[2]],c=plt_clrs[1])
-ax.plot([V[0],Bm2[0]],[V[1],Bm2[1]],[V[2],Bm2[2]],c=plt_clrs[1])
+ax.plot(cone2_x,cone2_y,cone2_z,c=plt_clrs[1],lw=lw2)
+ax.plot([Am2[0],Ap2[0]],[Am2[1],Ap2[1]],[Am2[2],Ap2[2]],c=plt_clrs[3],ls='--',lw=lw2)
+ax.plot([Bm2[0],Bp2[0]],[Bm2[1],Bp2[1]],[Bm2[2],Bp2[2]],c=plt_clrs[3],ls='--',lw=lw2)
+ax.plot([V[0],Ap2[0]],[V[1],Ap2[1]],[V[2],Ap2[2]],c=plt_clrs[1],lw=lw2)
+ax.plot([V[0],Am2[0]],[V[1],Am2[1]],[V[2],Am2[2]],c=plt_clrs[1],lw=lw2)
+ax.plot([V[0],Bp2[0]],[V[1],Bp2[1]],[V[2],Bp2[2]],c=plt_clrs[1],lw=lw2)
+ax.plot([V[0],Bm2[0]],[V[1],Bm2[1]],[V[2],Bm2[2]],c=plt_clrs[1],lw=lw2)
 
 ax.set_xlim([np.min(ex),np.max(ex)])
 ax.set_ylim([np.min(ey),np.max(ey)])
@@ -247,7 +255,7 @@ ax.set_xlabel('x')
 ax.set_ylabel('y')
 ax.set_zlabel('z')
 ax.set_aspect('equal')
-
+ax.view_init(90, -90)
 plt.show()
 
 # %%

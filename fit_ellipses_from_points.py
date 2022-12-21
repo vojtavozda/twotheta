@@ -184,4 +184,6 @@ for i in range(N):
     print(f'Ellipse {i}: x0={x0:3.0f}, y0={y0:3.0f}, a={a:3.0f}, b={b:3.0f}, phi={phi:1.2f}')
     xel,yel = el.get_ellipse_pts(params)
     plt.plot(xel,yel,color=gl.plt_clrs[i])
+plt.xlabel('x')
+plt.ylabel('y')
 plt.show()
