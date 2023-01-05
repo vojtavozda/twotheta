@@ -1,5 +1,6 @@
 # %%
 
+from scipy import optimize
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -141,3 +142,38 @@ ax = plt.gca()
 ax.set_aspect('equal', adjustable='box')
 plt.show()
 # %%
+
+import numpy as np
+import matplotlib.pyplot as plt
+import ellipse as el
+
+# Get some points on the ellipse 
+npts = 20
+x0, y0, a, b, phi = (100,100,80,40,np.pi/3)
+xx0, yy0 = el.get_ellipse_pts((x0,y0,a,b,phi))
+x, y = el.get_ellipse_pts((x0, y0, a, b, phi), npts, 0, 1*np.pi/2)
+noise = 0.5
+x += noise * np.random.normal(size=npts) 
+y += noise * np.random.normal(size=npts)
+
+coeffs = el.fit_ellipse(x, y)
+print('Exact parameters:')
+print('x0, y0, ap, bp, phi =', x0, y0, a, b, phi)
+print('Fitted parameters:')
+print('a, b, c, d, e, f =', coeffs)
+x0, y0, ap, bp, phi = el.cart_to_pol(coeffs)
+print('x0, y0, ap, bp, phi = ', x0, y0, ap, bp, phi)
+
+ansatz = [100,100,80,40,np.pi/3]
+bounds = ((None,None),(None,None),(None,None),(None,None),(None,None))
+res = optimize.minimize(el.fit_ellipse_sos,ansatz,args=(x,y),bounds=bounds)
+print("Fit parameters:",res.x)
+xx3, yy3 = el.get_ellipse_pts(res.x)
+
+plt.plot(x, y, '.')     # given points
+xx2, yy2 = el.get_ellipse_pts((x0, y0, ap, bp, phi))
+plt.plot(xx0, yy0,c='k',ls='--')
+plt.plot(xx2, yy2)
+# plt.plot(xx3, yy3)
+ax = plt.gca()
+plt.show()

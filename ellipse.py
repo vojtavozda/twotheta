@@ -25,19 +25,6 @@ def get_sum_of_squares(x:np.ndarray,y:np.ndarray,params:list) -> float:
     """
     Return sum os squares of the points (x_i,y_i) from the ellipse described by
     the 'params = x0, y0, a, b, phi'.
-    
-    Used for fitting using 'scipy.optimize.minimize' as follows:
-    ```
-    def objective(p:list,x:np.ndarray,y:np.ndarray) -> float:
-        return get_sum_of_squares(x,y,p)
-
-    x,y = get_ellipse([100,100,90,40,0])
-
-    ansatz = [0,0,0,0,0]
-    bounds = ((None,None),(None,None),(None,None),(None,None),(None,None))
-    res = optimize.minimize(objective1,ansatz,args=(x,y),bounds=bounds)
-    print("Fit parameters:",res.x)
-    ```
     """
 
     c = pol_to_cart(params)
@@ -46,6 +33,22 @@ def get_sum_of_squares(x:np.ndarray,y:np.ndarray,params:list) -> float:
     N = D @ c
     return np.sum(N**2)
 
+def fit_ellipse_sos(p:list,x:np.ndarray,y:np.ndarray) -> float:
+    """
+    To use as objective function when fitting ellipse.
+
+    Parameters are p = (x0,y0,a,b,phi)
+
+    Used for fitting using 'scipy.optimize.minimize' as follows:
+    ```
+    x,y = get_ellipse([100,100,90,40,0])
+    ansatz = [0,0,0,0,0]
+    bounds = ((None,None),(None,None),(None,None),(None,None),(None,None))
+    res = optimize.minimize(fit_ellipse_sos,ansatz,args=(x,y),bounds=bounds)
+    print("Fit parameters:",res.x)
+    ```
+    """
+    return get_sum_of_squares(x,y,p)
 
 def fit_ellipse(x, y):
     """
@@ -68,7 +71,7 @@ def fit_ellipse(x, y):
     import matplotlib.pyplot as plt
     import ellipse as el
 
-    # Get some points on the ellipse (no need to specify the eccentricity).
+    # Get some points on the ellipse
     npts = 20
     x0, y0, a, b, phi = (100,100,80,40,np.pi/3)
     x, y = el.get_ellipse_pts((x0, y0, a, b, phi), npts, 0, np.pi/2)

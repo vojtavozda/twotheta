@@ -10,6 +10,8 @@ import matplotlib
 from matplotlib import pyplot as plt
 import ellipse as el
 from genlib import plt_clrs
+import genlib as gl
+from scipy import optimize
 
 """
 Geometry description
@@ -79,8 +81,42 @@ Tips
 # ax.set_zlabel('z')
 # ax.set_aspect('equal')
 
-plt.show()
+# plt.show()
+
+# ------------------------------------------------------------------------------
+# Calculate two theta angles
+energy = 5.932                  # [keV]
+wavelength = 12.3985/energy     # [A]
+
+d_012 = 3.4662      # hkl 012 [A]
+d_104 = 2.5429      # hkl 104 [A]
+d_110 = 2.3730      # hkl 110 [A]
+d_113 = 2.0805      # hkl 113 [A]
+
+# Two theta calculation follows from Bragg's equation `lambda = 2*d*sin(theta)`
+two_theta_012 = 2*np.arcsin(wavelength/2/d_012)
+two_theta_104 = 2*np.arcsin(wavelength/2/d_104)
+two_theta_110 = 2*np.arcsin(wavelength/2/d_110)
+two_theta_113 = 2*np.arcsin(wavelength/2/d_113)
+
+# ------------------------------------------------------------------------------
+# Calculated parameters using pyFAI are:
+# distance: 0.0010321342264403 [m]
+# PONI1:    0.0002829606114021 [m]
+# PONI2:    0.0001775045680058 [m]
+# Rot1:     0.0173670646845016 [rad]
+# Rot2:     0.6732451185851951 [rad]
+# Rot3:    -0.0004043452479840 [rad]
+
+
 # %%
+
+def delta_diff(delta,a,z0,two_theta):
+
+    if cos(two_theta+delta)==0 or cos(two_theta-delta)==0:
+        return None
+
+    return (a-z0*sin(two_theta)/2*(1/cos(two_theta+delta)+1/cos(two_theta-delta)))**2
 
 def get_delta(a,z0,two_theta):
     """
@@ -118,10 +154,20 @@ def rotate_point(x,y,x0,y0,phi):
     return x_new, y_new
 
 # Define primary ellipse for which we find a cone -------
-two_theta = 40/180*pi
+two_theta = 35/180*pi
+two_theta = two_theta_012
 params = (1,2,4,3,1*pi/4)
-params = (283,658,486,292,0.27) # Fit of ellipse0
-params = (281,761,571,400,0.34) # Fit of ellipse1
+# params = (1,2,3,4,3*pi/4)
+
+params = (283, 658, 486, 292, 0.27) # SVD fit of ellipse 0 ()
+# params = (281, 761, 571, 400, 0.34) # SVD fit of ellipse 1 ()
+# params = (498, 588, 781, 407, 0.41) # SVD fit of ellipse 2 ()
+# params = (490, 759, 937, 580, 0.47) # SVD fit of ellipse 3 ()
+# params = (518, 336, 651, 241, 0.32) # SVD fit of ellipse 4 ()
+# params = (-14, 2010, 2000, 1712, pi/2+0.3) # SOS fit of ellipse 4 ()
+# params = (516, 392, 732, 311, 0.32) # SVD fit of ellipse 5 ()
+# params = (914,  38,  89,   5, 0.39) # SVD fit of ellipse 6 ()
+# params = (955,  26,  55,   2, 0.40) # SVD fit of ellipse 7 ()
 # -------------------------------------------------------
 cx,cy,a,b,phi = params
 ex,ey = el.get_ellipse_pts(params)
@@ -130,11 +176,22 @@ z0 = b/tan(two_theta)
 
 delta = get_delta(a,z0,two_theta)
 
+# res = optimize.minimize(delta_diff,1.5,args=(a,z0,two_theta))
+# print("Found delta:",res.x*180/pi)
+# delta = res.x[0]-90
+# delta_arr = np.linspace(0,2*pi,100)
+# a_arr = z0*sin(two_theta)/2*(1/cos(two_theta+delta_arr)+1/cos(two_theta-delta_arr))
+# plt.plot(delta_arr*180/pi,a_arr)
+# plt.plot([0,360],[a,a],ls='--',c='k')
+# plt.ylim(-20,20)
+
 s = z0*sin(two_theta)/2*(1/cos(two_theta+delta)-1/(cos(two_theta-delta)))
 V = np.array([0,0,0]).astype(float)
 V[0] = cx+s+z0*sin(delta)
 V[1] = cy
 V[2] = z0*cos(delta)
+
+print(V[0],V[1])
 
 # Rotate cone apex by phi around ellipse center
 V[0],V[1] = rotate_point(V[0],V[1],cx,cy,phi)
@@ -173,9 +230,11 @@ cone_x = S[0]-n[0]*c + r*cos(t)*a[0] + r*sin(t)*b[0]
 cone_y = S[1]-n[1]*c + r*cos(t)*a[1] + r*sin(t)*b[1]
 cone_z = S[2]-n[2]*c + r*cos(t)*a[2] + r*sin(t)*b[2]
 
-# Find new ellipse for secondary cone with different two_theta -----------------
+# ------------------------------------------------------------------------------
+# Find new ellipse for secondary cone with different two_theta
 # All these equations are taken from above but solve for new ellipse params
-two_theta2 = 45/180*pi
+two_theta2 = 40/180*pi
+two_theta2 = two_theta_104
 b2 = z0*tan(two_theta2)
 s2 = z0*sin(two_theta2)/2*(1/cos(two_theta2+delta)-1/(cos(two_theta2-delta)))
 V2 = V.copy()
@@ -209,14 +268,30 @@ cone2_x = S[0]-n[0]*c + r*cos(t)*a2[0] + r*sin(t)*b2[0]
 cone2_y = S[1]-n[1]*c + r*cos(t)*a2[1] + r*sin(t)*b2[1]
 cone2_z = S[2]-n[2]*c + r*cos(t)*a2[2] + r*sin(t)*b2[2]
 
-# Plot all the data ============================================================
+# ------------------------------------------------------------------------------
+# Plot all the data
 lw1 = 2
 lw2 = 1
 fig = plt.figure()
 ax = fig.add_subplot(111,projection='3d')
 ax.set_proj_type('ortho',None) # persp,0.1
 
-# Plot cone
+# data = np.load("data.npy")
+# data[data<0] = 0
+# data[data>30] = 30
+# xx,yy = np.meshgrid(np.arange(1024),np.arange(512))
+# ax.contourf(xx, yy, data, 100, zdir='z', offset=-0.1, cmap="plasma")
+
+# Plot fitted ellipses from Jungfrau detector ----------------------------------
+for i in range(8):
+    x = np.load(f'x_{i}.npy')
+    y = np.load(f'y_{i}.npy')
+    cart = el.fit_ellipse(x,y)
+    params = el.cart_to_pol(cart)
+    xel,yel = el.get_ellipse_pts(params)
+    ax.plot(xel,yel,np.zeros(len(xel)),ls='--',c='k',lw=0.5)
+
+# Plot cone --------------------------------------------------------------------
 ax.plot(V[0],V[1],V[2],'.',color='k',markersize=10)     # V  - cone apex
 ax.plot(S[0],S[1],S[2],'.',color='k',markersize=10)     # S  - cone axis
 ax.plot([V[0],S[0]],[V[1],S[1]],[V[2],S[2]],c='k',ls='--')
@@ -256,6 +331,8 @@ ax.set_ylabel('y')
 ax.set_zlabel('z')
 ax.set_aspect('equal')
 ax.view_init(90, -90)
+
+
 plt.show()
 
 # %%
