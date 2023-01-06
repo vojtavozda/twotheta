@@ -198,13 +198,13 @@ for i in range(N):
     plt.plot(xel,yel,color=gl.plt_clrs[i])
     
     # Fit ellipse using scipy.optimize
-    ansatz = params
-    bounds = ((-2000,2000),(-2000,2000),(1,2000),(1,2000),(0,2*pi))
-    res = optimize.minimize(el.fit_ellipse_sos,ansatz,args=(x,y),bounds=bounds)
-    x0, y0, a, b, phi = res.x
-    print(f'SOS: x0={x0:3.0f}, y0={y0:3.0f}, a={a:3.0f}, b={b:3.0f}, phi={phi:1.2f}')
-    xel,yel = el.get_ellipse_pts(res.x)
-    plt.plot(xel,yel,color=gl.plt_clrs[i],ls='--')
+    # ansatz = params
+    # bounds = ((-2000,2000),(-2000,2000),(1,2000),(1,2000),(0,2*pi))
+    # res = optimize.minimize(el.fit_ellipse_sos,ansatz,args=(x,y),bounds=bounds)
+    # x0, y0, a, b, phi = res.x
+    # print(f'SOS: x0={x0:3.0f}, y0={y0:3.0f}, a={a:3.0f}, b={b:3.0f}, phi={phi:1.2f}')
+    # xel,yel = el.get_ellipse_pts(res.x)
+    # plt.plot(xel,yel,color=gl.plt_clrs[i],ls='--')
     
 plt.xlabel('x')
 plt.ylabel('y')

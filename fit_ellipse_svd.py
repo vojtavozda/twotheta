@@ -151,7 +151,7 @@ import ellipse as el
 npts = 20
 x0, y0, a, b, phi = (100,100,80,40,np.pi/3)
 xx0, yy0 = el.get_ellipse_pts((x0,y0,a,b,phi))
-x, y = el.get_ellipse_pts((x0, y0, a, b, phi), npts, 0, 1*np.pi/2)
+x, y = el.get_ellipse_pts((x0, y0, a, b, phi), npts, 0, 1.5*np.pi/2)
 noise = 0.5
 x += noise * np.random.normal(size=npts) 
 y += noise * np.random.normal(size=npts)
