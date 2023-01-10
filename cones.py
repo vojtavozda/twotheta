@@ -41,47 +41,49 @@ Tips
 
 """
 
-# two_theta = pi/8
-# delta = pi/8
+two_theta = pi/8
+delta = pi/8
 
-# # Define cone
-# z_max = 1
-# Z0 = np.array([0,0,0.7*z_max])
-# a = np.linspace(0,2*np.pi,20)
-# r = np.linspace(0,1,10)
-# T, R = np.meshgrid(a, r)
-# cone_X = R * cos(T) * tan(two_theta) * z_max
-# cone_Y = R * sin(T) * tan(two_theta) * z_max
-# cone_Z = R * z_max
+# Define cone
+z_max = 1
+Z0 = np.array([0,0,0.7*z_max])
+a = np.linspace(0,2*np.pi,20)
+r = np.linspace(0,1,10)
+T, R = np.meshgrid(a, r)
+cone_X = R * cos(T) * tan(two_theta) * z_max
+cone_Y = R * sin(T) * tan(two_theta) * z_max
+cone_Z = R * z_max
 
-# # Define plane
-# n = np.array([sin(delta),0,cos(delta)])
+# Define plane
+n = np.array([sin(delta),0,cos(delta)])
 
-# plane_X, plane_Y = np.meshgrid(
-#     [np.min(cone_X)*1.5,np.max(cone_X)*1.5],
-#     [np.min(cone_Y)*1.5,np.max(cone_Y)*1.5])
-# plane_Z = (Z0@n - n[0]*plane_X - n[1]*plane_Y) / n[2]
+plane_X, plane_Y = np.meshgrid(
+    [np.min(cone_X)*1.5,np.max(cone_X)*1.5],
+    [np.min(cone_Y)*1.5,np.max(cone_Y)*1.5])
+plane_Z = (Z0@n - n[0]*plane_X - n[1]*plane_Y) / n[2]
 
 
-# fig = plt.figure()
-# ax = fig.add_subplot(111,projection='3d')
+fig = plt.figure()
+ax = fig.add_subplot(111,projection='3d')
 
-# ax.plot_surface(cone_X, cone_Y, cone_Z,alpha=0.5,antialiased=True,color=plt_clrs[0])
-# ax.plot_wireframe(cone_X, cone_Y, cone_Z,color=plt_clrs[0],linewidth=0.5)
-# ax.plot_surface(plane_X, plane_Y, plane_Z, alpha=0.3,antialiased=True,color='k')
-# ax.plot_wireframe(plane_X, plane_Y, plane_Z,color='k',linewidth=0.5)
+ax.plot_surface(cone_X, cone_Y, cone_Z,alpha=0.5,antialiased=True,color=plt_clrs[0])
+ax.plot_wireframe(cone_X, cone_Y, cone_Z,color=plt_clrs[0],linewidth=0.5)
+ax.plot_surface(plane_X, plane_Y, plane_Z, alpha=0.3,antialiased=True,color='k')
+ax.plot_wireframe(plane_X, plane_Y, plane_Z,color='k',linewidth=0.5)
 
-# # Plot z-axis
-# ax.plot([0,0],[0,0],[Z0[2],z_max],c='k',ls=':')
-# ax.plot([0,0],[0,0],[0,Z0[2]],c='k',ls='-')
-# ax.plot(Z0[0],Z0[1],Z0[2],'.',color='k',markersize=10)
+# Plot z-axis
+ax.plot([0,0],[0,0],[Z0[2],z_max],c='k',ls=':')
+ax.plot([0,0],[0,0],[0,Z0[2]],c='k',ls='-')
+ax.plot(Z0[0],Z0[1],Z0[2],'.',color='k',markersize=10)
 
-# ax.set_xlabel('x')
-# ax.set_ylabel('y')
-# ax.set_zlabel('z')
-# ax.set_aspect('equal')
+ax.set_xlabel('x')
+ax.set_ylabel('y')
+ax.set_zlabel('z')
+ax.set_aspect('equal')
 
-# plt.show()
+plt.show()
+
+# %%
 
 # ------------------------------------------------------------------------------
 # Calculate two theta angles
