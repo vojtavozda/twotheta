@@ -7,10 +7,12 @@ from numpy.linalg import norm
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from scipy import optimize
+import importlib
 
 import ellipse as el
 from genlib import plt_clrs
 
+importlib.reload(el)
 
 # ------------------------------------------------------------------------------
 # Calculate two theta angles
@@ -104,26 +106,6 @@ def sphere(x0,y0,z0,radius):
     Z = z0+cos(v)*radius
     return X,Y,Z
 
-def get_ellipse_parameters(z0,n,two_theta):
-
-    # First focus from closer Dandeline sphere
-    z_D1 = n[2]*z0/(n[2]+sin(two_theta))
-    r_D1 = z_D1*sin(two_theta)
-    f1 = np.array([0,0,z_D1])+r_D1*n
-
-    # Second focus from further Dandeline sphere
-    z_D2 = -n[2]*z0/(-n[2]+sin(two_theta))
-    r_D2= z_D2*sin(two_theta)
-    f2 = np.array([0,0,z_D2])-r_D2*n
-
-    # Calculate parameters of an ellipse at plane and cone intersection
-    b = z0*tan(two_theta)       # semi-minor axis
-    c = (f2+f1)/2                   # ellipse center
-    f = (norm(f2-f1))/2             # distance of foci from the center
-    a = np.sqrt(f**2+b**2)          # semi-major axis
-    phi = np.angle(n[0]+n[1]*1j)    # angle in xy projection
-
-    return c[0],c[1],a,b,phi
 
 # ------------------------------------------------------------------------------
 def objective(params):
@@ -131,6 +113,8 @@ def objective(params):
     global el_012, el_104, el_110, el_113
 
     z0,phi,theta,psi,shift_x,shift_y = params
+
+    # print("try params:",params)
 
     # Find base vectors of rotated detector
     base_x = rotate3D((1,0,0),phi,theta,psi)
@@ -144,17 +128,19 @@ def objective(params):
     el_113_rot = move3D(rotate3D(el_113,phi,theta,psi),shift_x*base_x+shift_y*base_y+np.array((0,0,z0)))
 
     # Calculate parameters of ellipses at cones and plane intersection
-    params_012 = get_ellipse_parameters(z0,n,two_theta_012)
-    params_104 = get_ellipse_parameters(z0,n,two_theta_104)
-    params_110 = get_ellipse_parameters(z0,n,two_theta_110)
-    params_113 = get_ellipse_parameters(z0,n,two_theta_113)
+    params_012 = el.get_ellipse_from_cone(z0,n,two_theta_012)
+    params_104 = el.get_ellipse_from_cone(z0,n,two_theta_104)
+    params_110 = el.get_ellipse_from_cone(z0,n,two_theta_110)
+    params_113 = el.get_ellipse_from_cone(z0,n,two_theta_113)
     
+    # print("params_012",params_012)
+
     # Compare found ellipses with experimental data
     sos = 0
     sos += el.get_sum_of_squares(el_012_rot[0,:],el_012_rot[1,:],params_012)
     sos += el.get_sum_of_squares(el_104_rot[0,:],el_104_rot[1,:],params_104)
-    sos += el.get_sum_of_squares(el_110_rot[0,:],el_110_rot[1,:],params_110)
-    sos += el.get_sum_of_squares(el_113_rot[0,:],el_113_rot[1,:],params_113)
+    # sos += el.get_sum_of_squares(el_110_rot[0,:],el_110_rot[1,:],params_110)
+    # sos += el.get_sum_of_squares(el_113_rot[0,:],el_113_rot[1,:],params_113)
     
     # print(f"z0={z0:.0f}, phi={phi*180/pi:.0f}, theta={theta*180/pi:.0f}, psi={psi*180/pi:.0f}, (x0,y0)=({shift_x:.0f},{shift_y:.0f}) | sos={sos:.0f}")
     
@@ -164,12 +150,12 @@ def objective(params):
 
 # ==============================================================================
 # parameters: (z0,phi,theta,psi,shift_x,shift_y)
-ansatz = [1200,0,-0.112,0,-150,-1000]
+ansatz = [1200,0,-25/180*pi,0,-150,-1000]
 # ansatz = [1200,0,0.0,0,0,0]
-bounds = ((100,5000),(-pi,pi),(-pi,pi),(-pi,pi),(-10000,10000),(-10000,10000))
+bounds = ((100,5000),(-pi,pi),(-29.5/180*pi,29.5/180*pi),(-pi,pi),(-10000,10000),(-10000,10000))
 res = optimize.minimize(objective,ansatz,bounds=bounds)
 z0,phi,theta,psi,shift_x,shift_y = res.x
-print(f"SOS = {res.fun:.2f}")
+print(f"SOS = {res.fun:.3f}")
 print("Calculated parameters:")
 print(f"z0 = {z0:.2f}")
 print(f"phi = {phi*180/pi:.2f}°")

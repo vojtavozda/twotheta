@@ -1,19 +1,37 @@
 import numpy as np
-from numpy import pi, sin, cos
+from numpy import pi, sin, cos, tan, sqrt
+from numpy.linalg import norm
 import cv2
 
+def fetch_params(params):
+    """
+    Convert parameters (list or dict) into tuple of parameters x0,y0,a,b,phi
+    """
 
-def get_ellipse_pts(params:list, npts:int=100, tmin:float=0, tmax:float=2*np.pi):
+    if isinstance(params,dict):
+        x0 = params['x0']
+        y0 = params['y0']
+        a = params['a']
+        b = params['b']
+        phi = params['phi']
+    elif isinstance(params,list):
+        x0, y0, a, b, phi = params
+
+    return (x0,y0,a,b,phi)
+
+def get_ellipse_pts(params, npts:int=100, tmin:float=0, tmax:float=2*np.pi):
     """
     Return npts points on the ellipse described by the
     'params = x0, y0, a, b, phi'
     for values of the parametric variable t between tmin and tmax (radians).
+    Params can be also dictionary with keys 'x0','y0','a','b','phi'.
 
     Example:
     x, y = el.get_ellipse_pts((x0, y0, a, b, phi), npts, tmin, tmax)
     """
 
-    x0, y0, a, b, phi = params
+    x0, y0, a, b, phi = fetch_params(params)
+
     # A grid of the parametric variable, t.
     t = np.linspace(tmin, tmax, npts)
     x = x0 + a * cos(t) * cos(phi) - b * sin(t) * sin(phi)
@@ -21,7 +39,7 @@ def get_ellipse_pts(params:list, npts:int=100, tmin:float=0, tmax:float=2*np.pi)
     return x, y
 
 
-def get_sum_of_squares(x:np.ndarray,y:np.ndarray,params:list) -> float:
+def get_sum_of_squares(x:np.ndarray,y:np.ndarray,params) -> float:
     """
     Return sum os squares of the points (x_i,y_i) from the ellipse described by
     the 'params = x0, y0, a, b, phi'.
@@ -110,6 +128,110 @@ def fit_ellipse(x, y):
     return np.concatenate((ak, T @ ak)).ravel()
 
 
+
+def get_ellipse_from_cone(z0,n,two_theta):
+    """
+    Returns parameters of ellipse which is created at intersection of a cone and
+    plane.
+    The cone with apex at (0,0,0), axis identical with z-axis and half apex
+    angle `two_theta` is intersected by the plane defined by a normal vector `n`
+    and point (0,0,z0).
+    """
+    
+    """
+    Dandelin spheres:
+    -----------------
+    This procedure is based on Dandelin spheres: These are two speres touching a
+    cone (on a circle) and the plane with normal vector n (one point). Center of
+    spere is located at z_D. Distance from z_D to the plane is R which is also
+    the radius of the spere. Coordinates of the point where the spere touches
+    the plane are R*n. This is one focus of the ellipse.
+    """
+    # First focus from closer Dandeline sphere
+    z_D1 = n[2]*z0/(n[2]+sin(two_theta))
+    r_D1 = z_D1*sin(two_theta)
+    f1 = np.array([0,0,z_D1])+r_D1*n
+
+    # Second focus from further Dandeline sphere
+    z_D2 = -n[2]*z0/(-n[2]+sin(two_theta))
+    r_D2= z_D2*sin(two_theta)
+    f2 = np.array([0,0,z_D2])-r_D2*n
+
+    """
+    How to find semi-major axis:
+    ----------------------------
+    So now we have positions of both foci and we need to calculate lengths
+    of semi-major and semi-minor axis. Semi-minor axis is not `b=z0*tg(2t)`
+    because center of the ellipse is shifted from cone axis. However, from two
+    foci we can calculate parameters of a line identical with major axis. Then
+    we find intersection of the line and cone which is defined as
+    x^2+y^2=tg(2t)^2*z^2. Distance from this point to the ellipse center is
+    semi-major axis.
+    """
+
+    if f1[2]==f2[2]:
+        # Degenerate ellipse (circle)
+        P1 = np.array([sqrt(tan(two_theta)**2*z0**2),0,z0])
+        
+    else:
+
+        # Find lower point where major axis intersects the cone
+        c = (f2[2]-f1[2])/(f2[0]-f1[0]) if f2[0]!=f1[0] else None
+        d = f1[2]-f1[0]*c if c is not None else None
+        e = (f2[2]-f1[2])/(f2[1]-f1[1]) if f2[1]!=f1[1] else None
+        f = f1[2]-f1[1]*e if e is not None else None
+
+        a2 = tan(two_theta)**2
+        b2 = 0
+        c2 = 0
+        if c is not None:
+            a2 += -1/c**2
+            b2 += 2*d/c**2
+            c2 += -d**2/c**2
+        if e is not None:
+            a2 += -1/e**2
+            b2 += 2*f/e**2
+            c2 += -f**2/e**2
+
+        z1 = (-b2 + sqrt(b2**2 - 4*a2*c2))/(2*a2)
+        z2 = (-b2 - sqrt(b2**2 - 4*a2*c2))/(2*a2)
+        z = np.min((z1,z2))
+        x = z/c-d/c if c is not None else 0
+        y = z/e-f/e if e is not None else 0
+        P1 = np.array([x,y,z])
+
+    # Calculate parameters of an ellipse at plane and cone intersection
+    f = (norm(f2-f1))/2             # distance of foci from the center
+    c = (f2+f1)/2                   # ellipse center
+    phi = np.angle(n[0]+n[1]*1j)    # angle in xy projection
+
+    a = norm(c-P1)
+    b = sqrt(a**2-f**2)
+
+    """
+    Projection of semi-major axis into xy plane:
+    --------------------------------------------
+    Finally, for our purposes we have to calculate projection of semi-major axis
+    into xy plane as we find points of these projected ellipse, then calculate
+    z-coordinates and semi-major axis of the final ellipse is the correct value.
+    """
+
+    if f1[2]!=f2[2]:
+        # Calculate angle between semi-major axis and xy plane
+        a_vec = f2-f1
+        angle_a = np.angle(np.sqrt(a_vec[0]**2+a_vec[1]**2)+a_vec[2]*1j)
+        # Calculate length of projected semi-major axis
+        a = a*cos(angle_a)
+
+    params = {
+        'x0': c[0], 'y0': c[1], 'a': a, 'b': b, 'phi': phi,
+        'z_D1': z_D1, 'r_D1': r_D1, 'f1': f1,
+        'z_D2': z_D2, 'r_D2': r_D2, 'f2': f2,
+        'P1':P1,
+    }
+
+    return params
+
 def mask_sum(data:np.ndarray,cx:float,cy:float,r:float,axr:float,phi:float,
     width:int=1) -> float:
     """
@@ -144,7 +266,8 @@ def pol_to_cart(params:list):
 
     """
 
-    x0, y0, a, b, phi = params
+    x0, y0, a, b, phi = fetch_params(params)
+
     cP = cos(phi)
     sP = sin(phi)
     s2P = sin(2*phi)
