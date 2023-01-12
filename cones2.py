@@ -2,12 +2,15 @@
 
 import numpy as np
 from numpy import sin, cos, pi, tan, sqrt
-from numpy.linalg import norm
+from numpy.linalg import norm, inv
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import importlib
 
 import ellipse as el
 from genlib import plt_clrs
+
+importlib.reload(el)
 
 # ------------------------------------------------------------------------------
 # Calculate two theta angles
@@ -74,7 +77,7 @@ def rotate3D(data:np.ndarray,phi:float,theta:float,psi:float):
 
     return R@data
 
-def move3D(data:np.ndarray,vector:np.ndarray):
+def move(data:np.ndarray,vector:np.ndarray):
     
     if len(data.shape)==1:
         return data + vector
@@ -101,121 +104,14 @@ def sphere(x0,y0,z0,radius):
     return X,Y,Z
 
 
-def get_ellipse_from_cone(z0,n,two_theta):
-    """
-    Returns parameters of ellipse which is created at intersection of a cone and
-    plane.
-    The cone with apex at (0,0,0), axis identical with z-axis and half apex
-    angle `two_theta` is intersected by the plane defined by a normal vector `n`
-    and point (0,0,z0).
-    """
-    
-    """
-    Dandelin spheres:
-    -----------------
-    This procedure is based on Dandelin spheres: These are two speres touching a
-    cone (on a circle) and the plane with normal vector n (one point). Center of
-    spere is located at z_D. Distance from z_D to the plane is R which is also
-    the radius of the spere. Coordinates of the point where the spere touches
-    the plane are R*n. This is one focus of the ellipse.
-    """
-    # First focus from closer Dandeline sphere
-    z_D1 = abs(n[2]*z0/(n[2]+sin(two_theta)))
-    r_D1 = z_D1*sin(two_theta)
-    f1 = np.array([0,0,z_D1])+r_D1*n
-
-    # Second focus from further Dandeline sphere
-    z_D2 = -n[2]*z0/(-n[2]+sin(two_theta))
-    r_D2= z_D2*sin(two_theta)
-    f2 = np.array([0,0,z_D2])-r_D2*n
-
-    """
-    How to find semi-major axis:
-    ----------------------------
-    So now we have positions of both foci and we need to calculate lengths
-    of semi-major and semi-minor axis. Semi-minor axis is not `b=z0*tg(2t)`
-    because center of the ellipse is shifted from cone axis. However, from two
-    foci we can calculate parameters of a line identical with major axis. Then
-    we find intersection of the line and cone which is defined as
-    x^2+y^2=tg(2t)^2*z^2. Distance from this point to the ellipse center is
-    semi-major axis.
-    """
-
-    if f1[2]==f2[2]:
-        # Degenerate ellipse (circle)
-        P1 = np.array([sqrt(tan(two_theta)**2*z0**2),0,z0])
-        
-    else:
-
-        # Find lower point where major axis intersects the cone
-        c = (f2[2]-f1[2])/(f2[0]-f1[0]) if f2[0]!=f1[0] else None
-        d = f1[2]-f1[0]*c if c is not None else None
-        e = (f2[2]-f1[2])/(f2[1]-f1[1]) if f2[1]!=f1[1] else None
-        f = f1[2]-f1[1]*e if e is not None else None
-
-        print(c,d,e,f)
-
-        a2 = tan(two_theta)**2
-        b2 = 0
-        c2 = 0
-        if c is not None:
-            a2 += -1/c**2
-            b2 += 2*d/c**2
-            c2 += -d**2/c**2
-        if e is not None:
-            a2 += -1/e**2
-            b2 += 2*f/e**2
-            c2 += -f**2/e**2
-
-        z1 = (-b2 + sqrt(b2**2 - 4*a2*c2))/(2*a2)
-        z2 = (-b2 - sqrt(b2**2 - 4*a2*c2))/(2*a2)
-        z = np.min((z1,z2))
-        x = z/c-d/c if c is not None else 0
-        y = z/e-f/e if e is not None else 0
-        P1 = np.array([x,y,z])
-
-    # Calculate parameters of an ellipse at plane and cone intersection
-    f = (norm(f2-f1))/2             # distance of foci from the center
-    c = (f2+f1)/2                   # ellipse center
-    phi = np.angle(n[0]+n[1]*1j)    # angle in xy projection
-
-
-    a = norm(c-P1)
-    print(a,c,P1)
-    b = sqrt(a**2-f**2)
-
-    """
-    Projection of semi-major axis into xy plane:
-    --------------------------------------------
-    Finally, for our purposes we have to calculate projection of semi-major axis
-    into xy plane as we find points of these projected ellipse, then calculate
-    z-coordinates and semi-major axis of the final ellipse is the correct value.
-    """
-
-    if f1[2]!=f2[2]:
-        # Calculate angle between semi-major axis and xy plane
-        a_vec = f2-f1
-        angle_a = np.angle(np.sqrt(a_vec[0]**2+a_vec[1]**2)+a_vec[2]*1j)
-        # Calculate length of projected semi-major axis
-        a = a*cos(angle_a)
-
-    params = {
-        'x0': c[0], 'y0': c[1], 'a': a, 'b': b, 'phi': phi,
-        'z_D1': z_D1, 'r_D1': r_D1, 'f1': f1,
-        'z_D2': z_D2, 'r_D2': r_D2, 'f2': f2,
-        'P1':P1,
-    }
-
-    return params
-
 # ==============================================================================
 
-z0 = 1127
-phi   = -2.61    /180*pi
-theta = -29.5     /180*pi
-psi   = -0.82     /180*pi
-shift_x = -165.27
-shift_y = -998.5
+z0 = 1184.6707
+phi   = -1.0414    /180*pi
+theta = -32.5151     /180*pi
+psi   = -0.0541     /180*pi
+shift_x = -163.8418
+shift_y = -1029.1911
 
 base_x = rotate3D((1,0,0),phi,theta,psi)
 base_y = rotate3D((0,1,0),phi,theta,psi)
@@ -223,18 +119,19 @@ base_z = rotate3D((0,0,1),phi,theta,psi)    # Also plane's normal vector
 n = base_z
 
 detector = np.array((
-    (0,0,0),
+    (0,0,0,),
     (1024,0,0),
     (1024,512,0),
-    (0,512,0)
+    (0,512,0),
+    (0,0,0)
 )).T
 
 # Rotate dectector and move to desired position within rotated plane
-el_012   = move3D(rotate3D(el_012,phi,theta,psi),shift_x*base_x+shift_y*base_y+np.array((0,0,z0)))
-el_104   = move3D(rotate3D(el_104,phi,theta,psi),shift_x*base_x+shift_y*base_y+np.array((0,0,z0)))
-el_110   = move3D(rotate3D(el_110,phi,theta,psi),shift_x*base_x+shift_y*base_y+np.array((0,0,z0)))
-el_113   = move3D(rotate3D(el_113,phi,theta,psi),shift_x*base_x+shift_y*base_y+np.array((0,0,z0)))
-detector = move3D(rotate3D(detector,phi,theta,psi),shift_x*base_x+shift_y*base_y+np.array((0,0,z0)))
+el_012   = move(rotate3D(el_012,phi,theta,psi),shift_x*base_x+shift_y*base_y+np.array((0,0,z0)))
+el_104   = move(rotate3D(el_104,phi,theta,psi),shift_x*base_x+shift_y*base_y+np.array((0,0,z0)))
+el_110   = move(rotate3D(el_110,phi,theta,psi),shift_x*base_x+shift_y*base_y+np.array((0,0,z0)))
+el_113   = move(rotate3D(el_113,phi,theta,psi),shift_x*base_x+shift_y*base_y+np.array((0,0,z0)))
+detector = move(rotate3D(detector,phi,theta,psi),shift_x*base_x+shift_y*base_y+np.array((0,0,z0)))
 
 params_012 = el.get_ellipse_from_cone(z0,n,two_theta_012)
 el012_x, el012_y = el.get_ellipse_pts(params_012)
@@ -251,7 +148,7 @@ el110_x, el110_y = el.get_ellipse_pts(params_110)
 el110_z = (n[2]*z0-n[0]*el110_x-n[1]*el110_y)/n[2]
 print("Sum of squares 110 =",el.get_sum_of_squares(el_110[0,:],el_110[1,:],params_110))
 
-params_113 = get_ellipse_from_cone(z0,n,two_theta_113)
+params_113 = el.get_ellipse_from_cone(z0,n,two_theta_113)
 el113_x, el113_y = el.get_ellipse_pts(params_113)
 el113_z = (n[2]*z0-n[0]*el113_x-n[1]*el113_y)/n[2]
 print("Sum of squares 113 =",el.get_sum_of_squares(el_113[0,:],el_113[1,:],params_113))
@@ -259,7 +156,6 @@ print("Sum of squares 113 =",el.get_sum_of_squares(el_113[0,:],el_113[1,:],param
 plane_x = np.array([-600,600,600,-600,-600])
 plane_y = np.array([-300,-300,300,300,-300])
 plane_z = (n[2]*z0-n[0]*plane_x-n[1]*plane_y)/n[2]
-
 
 
 # ------------------------------------------------------------------------------
@@ -307,11 +203,25 @@ def plot_data(ax:plt.Axes):
     ax.plot(el113_x,el113_y,el113_z,c='k')
     # ax.plot(params_113['P1'][0],params_113['P1'][1],params_113['P1'][2],'.',color='k',markersize=10)              # cone apex
 
-    # ax.set_xlim(np.min((np.min(detector[0,:]),np.min(el012_x),np.min(cone_X))),
-    #             np.max((np.max(detector[0,:]),np.max(el012_x),np.max(cone_X))))
-    # ax.set_ylim(np.min((np.min(detector[1,:]),np.min(el012_y),np.min(cone_Y))),
-    #             np.max((np.max(detector[1,:]),np.max(el012_y),np.max(cone_Y))))
-    # ax.set_zlim(0,np.max((np.max(cone_Z),np.max(el113_z))))
+    # Plot projection to xy plane
+    z = -z0/2
+
+    ax.plot(0,0,z,'.',color='k',markersize=10)
+    ax.plot(detector[0,:],detector[1,:],np.zeros_like(detector[2,:])+z,c='k')
+    ax.plot(el_012[0,:],el_012[1,:],np.zeros_like(el_012[2,:])+z,'-')
+    ax.plot(el_104[0,:],el_104[1,:],np.zeros_like(el_104[2,:])+z,'-')
+    ax.plot(el_110[0,:],el_110[1,:],np.zeros_like(el_110[2,:])+z,'-')
+    ax.plot(el_113[0,:],el_113[1,:],np.zeros_like(el_113[2,:])+z,'-')
+    ax.plot(el012_x,el012_y,np.zeros_like(el012_x)+z,c='k')
+    ax.plot(el104_x,el104_y,np.zeros_like(el104_x)+z,c='k')
+    ax.plot(el110_x,el110_y,np.zeros_like(el110_x)+z,c='k')
+    ax.plot(el113_x,el113_y,np.zeros_like(el113_x)+z,c='k')
+
+    
+    ax.set_xlim(np.min(cone_X),np.max(cone_X))
+    ax.set_ylim(np.min(cone_Y),np.max(cone_Y))
+    ax.set_zlim(0,np.max(cone_Z))
+    
     ax.set_aspect('equal')
 
 # ----- Plot single 3D figure -----
@@ -351,4 +261,120 @@ axs[0].set_xlabel('x')
 axs[0].set_ylabel('y')
 axs[0].set_zlabel('z')
 
+plt.tight_layout()
+plt.show()
+
+# %%
+
+importlib.reload(el)
+
+proj_012_x = (base_y[0]*el012_y-base_y[1]*el012_x)/(base_y[0]*base_x[1]-base_y[1]*base_x[0])
+proj_012_y = (el012_x-proj_012_x*base_x[0])/base_y[0]
+
+x_012 = np.load(f'x_0.npy')
+y_012 = np.load(f'y_0.npy')
+
+x_104 = np.load(f'x_2.npy')
+y_104 = np.load(f'y_2.npy')
+
+x_110 = np.load(f'x_4.npy')
+y_110 = np.load(f'y_4.npy')
+
+x_113 = np.load(f'x_6.npy')
+y_113 = np.load(f'y_6.npy')
+
+el_012 = np.array((x_012,y_012))
+el_104 = np.array((x_104,y_104))
+el_110 = np.array((x_110,y_110))
+el_113 = np.array((x_113,y_113))
+
+data = np.load("data.npy")
+data[data<0] = 0
+data[data>30] = 30
+data[:,0:5] = 0
+data[:,255:257] = 0
+data[:,511:513] = 0
+data[:,767:769] = 0
+data[:,1019:] = 0
+data[0:4,:] = 0
+data[255:257,:] = 0
+data[504:,:] = 0
+
+fig = plt.figure()
+axs:plt.Axes = plt.gca()
+plt.imshow(data,origin='lower',vmin=0,vmax=10)
+plt.plot(el_012[0,:],el_012[1,:])
+plt.plot(el_104[0,:],el_104[1,:])
+plt.plot(el_110[0,:],el_110[1,:])
+plt.plot(el_113[0,:],el_113[1,:])
+
+two_thetas = np.linspace(30,57,1000)
+intensities = np.zeros_like(two_thetas)
+
+for i,two_theta in enumerate(two_thetas):
+
+    """
+    Goal: Find parameters of an ellipse projected from xy plane to tilted
+    detector plane.
+    """
+    # Get parameters of an ellipse in xy plane
+    params = el.get_ellipse_from_cone(z0,n,two_theta/180*pi)
+
+    a = params['a']
+    b = params['b']
+
+    # Center of the ellipse
+    point_c = np.array([params['x0'],params['y0']])
+    # Point where semi-major axis touches the ellipse
+    point_a = np.array([point_c[0]+a*cos(params['phi']),
+                        point_c[1]+a*sin(params['phi'])])
+    # Point where semi-minor axis touches the ellipse
+    point_b = np.array([point_c[0]-b*sin(params['phi']),
+                        point_c[1]+b*cos(params['phi'])])
+    # Calculate vectors from center to point a and point b
+    vec_a = point_a-point_c
+    vec_b = point_b-point_c
+
+    # Transform matrix from xy plane into tilted detector plane
+    M = inv(np.array([base_x[0:2],base_y[0:2]]).T)
+    # Shift vector to origin
+    shift_vec = np.array([-shift_x,-shift_y])
+
+    # Now project the center of the ellipse to the plane and move to the origin
+    proj_point_c = move(M@point_c,shift_vec)
+    # Do the same with vectors
+    proj_vec_a = M@vec_a
+    proj_vec_b = M@vec_b
+    # Calculate semi-major and semi-minor axes of the projected ellipse
+    proj_a = norm(proj_vec_a)
+    proj_b = norm(proj_vec_b)
+    # Angle of projected ellipse is not conserved
+    proj_phi = np.angle(proj_vec_a[0]+proj_vec_a[1]*1j)
+
+    # Join parameters of the projected ellipse
+    proj_params = (proj_point_c[0],proj_point_c[1],proj_a,proj_b,proj_phi)
+    el_proj = np.array(el.get_ellipse_pts(proj_params,npts=500))
+    if i%np.ceil(len(two_thetas)/30)==0:
+        plt.plot(el_proj[0,:],el_proj[1,:],ls='--',c='w',lw=0.5)
+
+    # Same points can be obtained by simple projecting original ellipse:
+    # ...el_orig = np.array(el.get_ellipse_pts(params,npts=200))
+    # ...el_proj = move(M@el_orig,shift_vec)
+    # But in this case we have just points and not parameters
+    
+    intensities[i] = el.mask_sum(data,proj_params)
+
+plt.xlim(0,1024)
+plt.ylim(0,512)
+axs.set_aspect('equal')
+plt.show()
+
+fig = plt.figure()
+plt.plot(two_thetas,intensities)
+plt.show()
+# %%
+
+plt.plot(np.sum(data,axis=0))
+plt.show()
+plt.plot(np.sum(data,axis=1))
 plt.show()

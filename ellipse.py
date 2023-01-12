@@ -14,7 +14,7 @@ def fetch_params(params):
         a = params['a']
         b = params['b']
         phi = params['phi']
-    elif isinstance(params,list):
+    elif isinstance(params,list) or isinstance(params,tuple):
         x0, y0, a, b, phi = params
 
     return (x0,y0,a,b,phi)
@@ -157,6 +157,13 @@ def get_ellipse_from_cone(z0,n,two_theta):
     r_D2= z_D2*sin(two_theta)
     f2 = np.array([0,0,z_D2])-r_D2*n
 
+    # Calculate angle between semi-major axis and xy plane
+    a_vec = f2-f1
+    angle_a = abs(np.angle(np.sqrt(a_vec[0]**2+a_vec[1]**2)+a_vec[2]*1j))
+    # Check wheter cone section is an ellipse or parabola/hyperbola
+    if (two_theta > pi/2-angle_a):
+        print("Not an ellipse!")
+
     """
     How to find semi-major axis:
     ----------------------------
@@ -217,9 +224,6 @@ def get_ellipse_from_cone(z0,n,two_theta):
     """
 
     if f1[2]!=f2[2]:
-        # Calculate angle between semi-major axis and xy plane
-        a_vec = f2-f1
-        angle_a = np.angle(np.sqrt(a_vec[0]**2+a_vec[1]**2)+a_vec[2]*1j)
         # Calculate length of projected semi-major axis
         a = a*cos(angle_a)
 
@@ -232,7 +236,7 @@ def get_ellipse_from_cone(z0,n,two_theta):
 
     return params
 
-def mask_sum(data:np.ndarray,cx:float,cy:float,r:float,axr:float,phi:float,
+def mask_sum_old(data:np.ndarray,cx:float,cy:float,r:float,axr:float,phi:float,
     width:int=1) -> float:
     """
     Create circular mask with cx,cy,r and calculate sum of `data` below the
@@ -253,6 +257,24 @@ def mask_sum(data:np.ndarray,cx:float,cy:float,r:float,axr:float,phi:float,
         return 0
     else:
         return np.sum(overlap)/np.sum(mask)
+
+def mask_sum(data:np.ndarray,params,width:int=1) -> float:
+    """
+    Create elliptic mask with x0,y0,a,b and calculate sum of `data` below the
+    mask.
+    """
+    
+    x0, y0, a, b, phi = fetch_params(params)
+
+    mask = data.copy()*0
+    cv2.ellipse(mask,(int(x0),int(y0)),(int(a),int(b)),phi*180/pi,0,360,1,width)
+    overlap = mask*data
+    overlap[overlap is None] = 0
+    if np.sum(mask) == 0:
+        return 0
+    else:
+        return np.sum(overlap)/np.sum(mask)
+
 
 def pol_to_cart(params:list):
     """

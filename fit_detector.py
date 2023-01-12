@@ -139,7 +139,7 @@ def objective(params):
     sos = 0
     sos += el.get_sum_of_squares(el_012_rot[0,:],el_012_rot[1,:],params_012)
     sos += el.get_sum_of_squares(el_104_rot[0,:],el_104_rot[1,:],params_104)
-    # sos += el.get_sum_of_squares(el_110_rot[0,:],el_110_rot[1,:],params_110)
+    sos += el.get_sum_of_squares(el_110_rot[0,:],el_110_rot[1,:],params_110)
     # sos += el.get_sum_of_squares(el_113_rot[0,:],el_113_rot[1,:],params_113)
     
     # print(f"z0={z0:.0f}, phi={phi*180/pi:.0f}, theta={theta*180/pi:.0f}, psi={psi*180/pi:.0f}, (x0,y0)=({shift_x:.0f},{shift_y:.0f}) | sos={sos:.0f}")
@@ -152,14 +152,14 @@ def objective(params):
 # parameters: (z0,phi,theta,psi,shift_x,shift_y)
 ansatz = [1200,0,-25/180*pi,0,-150,-1000]
 # ansatz = [1200,0,0.0,0,0,0]
-bounds = ((100,5000),(-pi,pi),(-29.5/180*pi,29.5/180*pi),(-pi,pi),(-10000,10000),(-10000,10000))
+bounds = ((100,5000),(-pi,pi),(-35/180*pi,35/180*pi),(-pi,pi),(-10000,10000),(-10000,10000))
 res = optimize.minimize(objective,ansatz,bounds=bounds)
 z0,phi,theta,psi,shift_x,shift_y = res.x
 print(f"SOS = {res.fun:.3f}")
 print("Calculated parameters:")
-print(f"z0 = {z0:.2f}")
-print(f"phi = {phi*180/pi:.2f}°")
-print(f"theta = {theta*180/pi:.2f}°")
-print(f"psi = {psi*180/pi:.2f}°")
-print(f"x = {shift_x:.2f}")
-print(f"y = {shift_y:.2f}")
+print(f"z0 = {z0:.4f}")
+print(f"phi = {phi*180/pi:.4f}°")
+print(f"theta = {theta*180/pi:.4f}°")
+print(f"psi = {psi*180/pi:.4f}°")
+print(f"x = {shift_x:.4f}")
+print(f"y = {shift_y:.4f}")
