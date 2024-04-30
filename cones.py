@@ -1,5 +1,7 @@
 # %%
 
+import os
+import sys
 import numpy as np
 from numpy import pi, cos, sin, sqrt, tan
 from numpy import linalg as LA
@@ -12,6 +14,9 @@ import ellipse as el
 from genlib import plt_clrs
 import genlib as gl
 from scipy import optimize
+
+# change current directory to the one where this script is located
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 """
 Geometry description
@@ -286,8 +291,8 @@ ax.set_proj_type('ortho',None) # persp,0.1
 
 # Plot fitted ellipses from Jungfrau detector ----------------------------------
 for i in range(8):
-    x = np.load(f'x_{i}.npy')
-    y = np.load(f'y_{i}.npy')
+    x = np.load(os.path.join('data',f'x_{i}.npy'))
+    y = np.load(os.path.join('data',f'y_{i}.npy'))
     cart = el.fit_ellipse(x,y)
     params = el.cart_to_pol(cart)
     xel,yel = el.get_ellipse_pts(params)

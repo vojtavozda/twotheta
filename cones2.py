@@ -1,5 +1,5 @@
 # %%
-
+import os
 import numpy as np
 from numpy import sin, cos, pi, tan, sqrt
 from numpy.linalg import norm, inv
@@ -30,20 +30,20 @@ two_theta_113 = 2*np.arcsin(wavelength/2/d_113)
 
 # ------------------------------------------------------------------------------
 # Load points of found ellipses from detector
-x_012 = np.load(f'x_0.npy')
-y_012 = np.load(f'y_0.npy')
+x_012 = np.load(os.path.join('data',f'x_0.npy'))
+y_012 = np.load(os.path.join('data',f'y_0.npy'))
 el_012 = np.array((x_012,y_012,np.zeros_like(x_012)))
 
-x_104 = np.load(f'x_2.npy')
-y_104 = np.load(f'y_2.npy')
+x_104 = np.load(os.path.join('data',f'x_2.npy'))
+y_104 = np.load(os.path.join('data',f'y_2.npy'))
 el_104 = np.array((x_104,y_104,np.zeros_like(x_104)))
 
-x_110 = np.load(f'x_4.npy')
-y_110 = np.load(f'y_4.npy')
+x_110 = np.load(os.path.join('data',f'x_4.npy'))
+y_110 = np.load(os.path.join('data',f'y_4.npy'))
 el_110 = np.array((x_110,y_110,np.zeros_like(x_110)))
 
-x_113 = np.load(f'x_6.npy')
-y_113 = np.load(f'y_6.npy')
+x_113 = np.load(os.path.join('data',f'x_6.npy'))
+y_113 = np.load(os.path.join('data',f'y_6.npy'))
 el_113 = np.array((x_113,y_113,np.zeros_like(x_113)))
 
 def rotate3D(data:np.ndarray,phi:float,theta:float,psi:float):
@@ -271,24 +271,24 @@ importlib.reload(el)
 proj_012_x = (base_y[0]*el012_y-base_y[1]*el012_x)/(base_y[0]*base_x[1]-base_y[1]*base_x[0])
 proj_012_y = (el012_x-proj_012_x*base_x[0])/base_y[0]
 
-x_012 = np.load(f'x_0.npy')
-y_012 = np.load(f'y_0.npy')
+x_012 = np.load(os.path.join('data',f'x_0.npy'))
+y_012 = np.load(os.path.join('data',f'y_0.npy'))
 
-x_104 = np.load(f'x_2.npy')
-y_104 = np.load(f'y_2.npy')
+x_104 = np.load(os.path.join('data',f'x_2.npy'))
+y_104 = np.load(os.path.join('data',f'y_2.npy'))
 
-x_110 = np.load(f'x_4.npy')
-y_110 = np.load(f'y_4.npy')
+x_110 = np.load(os.path.join('data',f'x_4.npy'))
+y_110 = np.load(os.path.join('data',f'y_4.npy'))
 
-x_113 = np.load(f'x_6.npy')
-y_113 = np.load(f'y_6.npy')
+x_113 = np.load(os.path.join('data',f'x_6.npy'))
+y_113 = np.load(os.path.join('data',f'y_6.npy'))
 
 el_012 = np.array((x_012,y_012))
 el_104 = np.array((x_104,y_104))
 el_110 = np.array((x_110,y_110))
 el_113 = np.array((x_113,y_113))
 
-data = np.load("data.npy")
+data = np.load(os.path.join('data','data.npy'))
 data[data<0] = 0
 data[data>30] = 30
 data[:,0:5] = 0

@@ -1,10 +1,12 @@
 # %%
-
+import os
 import numpy as np
 from matplotlib import pyplot as plt
 
+# change current directory to the one where this script is located
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-data:np.ndarray = np.load("data.npy")
+data:np.ndarray = np.load(os.path.join('data','data.npy'))
 data[data>30] = 30
 data[data<0] = 0
 
@@ -36,22 +38,22 @@ for x in range(data.shape[1]):
     if x == 888: y0 = 0
     ydata[x] = y0
 
-x0 = np.load('x_0.npy')
-y0 = np.load('y_0.npy')
-x1 = np.load('x_1.npy')
-y1 = np.load('y_1.npy')
-x2 = np.load('x_2.npy')
-y2 = np.load('y_2.npy')
-x3 = np.load('x_3.npy')
-y3 = np.load('y_3.npy')
-x4 = np.load('x_4.npy')
-y4 = np.load('y_4.npy')
-x5 = np.load('x_5.npy')
-y5 = np.load('y_5.npy')
-x6 = np.load('x_6.npy')
-y6 = np.load('y_6.npy')
-x7 = np.load('x_7.npy')
-y7 = np.load('y_7.npy')
+x0 = np.load(os.path.join('data','x_0.npy'))
+y0 = np.load(os.path.join('data','y_0.npy'))
+x1 = np.load(os.path.join('data','x_1.npy'))
+y1 = np.load(os.path.join('data','y_1.npy'))
+x2 = np.load(os.path.join('data','x_2.npy'))
+y2 = np.load(os.path.join('data','y_2.npy'))
+x3 = np.load(os.path.join('data','x_3.npy'))
+y3 = np.load(os.path.join('data','y_3.npy'))
+x4 = np.load(os.path.join('data','x_4.npy'))
+y4 = np.load(os.path.join('data','y_4.npy'))
+x5 = np.load(os.path.join('data','x_5.npy'))
+y5 = np.load(os.path.join('data','y_5.npy'))
+x6 = np.load(os.path.join('data','x_6.npy'))
+y6 = np.load(os.path.join('data','y_6.npy'))
+x7 = np.load(os.path.join('data','x_7.npy'))
+y7 = np.load(os.path.join('data','y_7.npy'))
 
 plt.imshow(data)
 plt.plot(x0,y0,color='g',marker='.',ls='',markersize=1)
