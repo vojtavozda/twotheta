@@ -3,7 +3,7 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.signal import find_peaks
-
+import extra_data
 
 
 def findLine(data:np.ndarray,y0:int,direction:int=1) -> np.ndarray:
@@ -87,10 +87,10 @@ def findLine(data:np.ndarray,y0:int,direction:int=1) -> np.ndarray:
 
 
 
-
 data_path = "/home/vovo/FZU/experimenty/240920_HED_#6869/twotheta/p2838/JF3_run[135]_train[all]_bkg.npy"
 data:np.ndarray = np.load(data_path)
 # data:np.ndarray = np.load(os.path.join('p2838','JF3_run[135]_train[all].npy'))
+export_dir = "/home/vovo/FZU/experimenty/240920_HED_#6869/twotheta/data"
 
 data[data>30] = 30
 data[data<0] = 0
@@ -149,8 +149,9 @@ for conic in conics_forward+conics_backward:
 print(f"{len(conics)} conics identified as unique.")
 
 plt.imshow(data)
-for conic in conics:
+for i,conic in enumerate(conics):
     plt.plot(conic[0],conic[1],color='r')
+    np.save(os.path.join(export_dir,f"conic_{i}.npy"),conic)
 plt.show()
 
 

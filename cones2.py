@@ -31,20 +31,20 @@ two_theta_113 = 2*np.arcsin(wavelength/2/d_113)
 
 # ------------------------------------------------------------------------------
 # Load points of found ellipses from detector
-x_012 = np.load(os.path.join('data',f'x_0.npy'))
-y_012 = np.load(os.path.join('data',f'y_0.npy'))
+x_012 = np.load(os.path.join('data','x_0.npy'))
+y_012 = np.load(os.path.join('data','y_0.npy'))
 el_012 = np.array((x_012,y_012,np.zeros_like(x_012)))
 
-x_104 = np.load(os.path.join('data',f'x_2.npy'))
-y_104 = np.load(os.path.join('data',f'y_2.npy'))
+x_104 = np.load(os.path.join('data','x_2.npy'))
+y_104 = np.load(os.path.join('data','y_2.npy'))
 el_104 = np.array((x_104,y_104,np.zeros_like(x_104)))
 
-x_110 = np.load(os.path.join('data',f'x_4.npy'))
-y_110 = np.load(os.path.join('data',f'y_4.npy'))
+x_110 = np.load(os.path.join('data','x_4.npy'))
+y_110 = np.load(os.path.join('data','y_4.npy'))
 el_110 = np.array((x_110,y_110,np.zeros_like(x_110)))
 
-x_113 = np.load(os.path.join('data',f'x_6.npy'))
-y_113 = np.load(os.path.join('data',f'y_6.npy'))
+x_113 = np.load(os.path.join('data','x_6.npy'))
+y_113 = np.load(os.path.join('data','y_6.npy'))
 el_113 = np.array((x_113,y_113,np.zeros_like(x_113)))
 
 def rotate3D(data:np.ndarray,phi:float,theta:float,psi:float):
@@ -113,6 +113,15 @@ theta = -32.5151     /180*pi
 psi   = -0.0541     /180*pi
 shift_x = -163.8418
 shift_y = -1029.1911
+
+# z0 = 1242.1062
+# phi = 0.3633/180*pi
+# theta = -35/180*pi
+# psi = 0.0128/180*pi
+# shift_x = -161.8735
+# shift_y = -1061.7845
+
+z0,phi,theta,psi,shift_x,shift_y = [1199.9753,0.2374,-0.5179,-0.0000,-149.9912,-1000.0338]
 
 base_x = rotate3D((1,0,0),phi,theta,psi)
 base_y = rotate3D((0,1,0),phi,theta,psi)
@@ -265,24 +274,23 @@ axs[0].set_zlabel('z')
 plt.tight_layout()
 plt.show()
 
-# %%
 
 importlib.reload(el)
 
 proj_012_x = (base_y[0]*el012_y-base_y[1]*el012_x)/(base_y[0]*base_x[1]-base_y[1]*base_x[0])
 proj_012_y = (el012_x-proj_012_x*base_x[0])/base_y[0]
 
-x_012 = np.load(os.path.join('data',f'x_0.npy'))
-y_012 = np.load(os.path.join('data',f'y_0.npy'))
+x_012 = np.load(os.path.join('data','x_0.npy'))
+y_012 = np.load(os.path.join('data','y_0.npy'))
 
-x_104 = np.load(os.path.join('data',f'x_2.npy'))
-y_104 = np.load(os.path.join('data',f'y_2.npy'))
+x_104 = np.load(os.path.join('data','x_2.npy'))
+y_104 = np.load(os.path.join('data','y_2.npy'))
 
-x_110 = np.load(os.path.join('data',f'x_4.npy'))
-y_110 = np.load(os.path.join('data',f'y_4.npy'))
+x_110 = np.load(os.path.join('data','x_4.npy'))
+y_110 = np.load(os.path.join('data','y_4.npy'))
 
-x_113 = np.load(os.path.join('data',f'x_6.npy'))
-y_113 = np.load(os.path.join('data',f'y_6.npy'))
+x_113 = np.load(os.path.join('data','x_6.npy'))
+y_113 = np.load(os.path.join('data','y_6.npy'))
 
 el_012 = np.array((x_012,y_012))
 el_104 = np.array((x_104,y_104))
@@ -303,7 +311,7 @@ data[504:,:] = 0
 
 fig = plt.figure()
 axs:plt.Axes = plt.gca()
-plt.imshow(data,origin='lower',vmin=0,vmax=10)
+plt.imshow(data,origin='lower',vmin=0,vmax=5)
 plt.plot(el_012[0,:],el_012[1,:])
 plt.plot(el_104[0,:],el_104[1,:])
 plt.plot(el_110[0,:],el_110[1,:])
@@ -363,7 +371,11 @@ for i,two_theta in enumerate(two_thetas):
     # ...el_proj = move(M@el_orig,shift_vec)
     # But in this case we have just points and not parameters
     
-    intensities[i] = el.mask_sum(data,proj_params)
+    if np.isnan(proj_params).any() or np.isinf(proj_params).any():
+        print("Warining: NaN or Inf in proj_params")
+        intensities[i] = 0
+    else:
+        intensities[i] = el.mask_sum(data,proj_params)
 
 plt.xlim(0,1024)
 plt.ylim(0,512)

@@ -33,10 +33,10 @@ def objective2(p:list,x1,y1,x2,y2) -> float:
 
 
 
-x1 = np.load('x_2.npy')
-y1 = np.load('y_2.npy')
-x2 = np.load('x_2.npy')
-y2 = np.load('y_2.npy')
+x1 = np.load('data/x_2.npy')
+y1 = np.load('data/y_2.npy')
+x2 = np.load('data/x_2.npy')
+y2 = np.load('data/y_2.npy')
 
 # x1,y1 = el.get_ellipse([100,100,90,45,0])
 # x2,y2 = el.get_ellipse([100,100,60,30,0])
@@ -48,8 +48,8 @@ print("Fit parameters:",res.x)
 print("Final SOS:",res.fun)
 x = res.x
 
-x1f,y1f = el.get_ellipse([x[0],x[1],x[4],x[4]*x[3],x[2]])
-x2f,y2f = el.get_ellipse([x[0],x[1],x[5],x[5]*x[3],x[2]])
+x1f,y1f = el.get_ellipse_pts([x[0],x[1],x[4],x[4]*x[3],x[2]])
+x2f,y2f = el.get_ellipse_pts([x[0],x[1],x[5],x[5]*x[3],x[2]])
 
 plt.plot(x1,y1,'.',markersize=5,ls='',c='b')
 plt.plot(x2,y2,'.',markersize=5,ls='',c='b')
@@ -62,7 +62,7 @@ y0 = x[1]
 axr = x[3]
 phi = x[2]
 
-data = np.load("data.npy")
+data = np.load("data/data.npy")
 data[data<0] = 0
 data[data>30] = 30
 plt.imshow(data,origin='lower',vmin=0,vmax=15)
@@ -95,10 +95,10 @@ def objective1(p:list,x:np.ndarray,y:np.ndarray) -> float:
     sos = el.get_sum_of_squares(x,y,p)
     return sos
 
-x,y = el.get_ellipse([100,100,90,40,0])
+x,y = el.get_ellipse_pts([100,100,90,40,0])
 
-x = np.load('x_5.npy')
-y = np.load('y_5.npy')
+x = np.load('data/x_5.npy')
+y = np.load('data/y_5.npy')
 
 ansatz = [500,730,1000,610,0.4]
 bounds = ((0,1000),(400,1000),(1,1000),(1,1000),(0,2*pi))
@@ -113,7 +113,7 @@ plt.plot(xf,yf)
 plt.gca().axis('equal')
 plt.show()
 
-data = np.load("data.npy")
+data = np.load("data/data.npy")
 data[data<0] = 0
 data[data>30] = 30
 plt.imshow(data,origin='lower',vmin=0,vmax=15)

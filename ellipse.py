@@ -43,6 +43,7 @@ def get_sum_of_squares(x:np.ndarray,y:np.ndarray,params) -> float:
     """
     Return sum os squares of the points (x_i,y_i) from the ellipse described by
     the 'params = x0, y0, a, b, phi'.
+    TODO: Sometimes it returns 1e66?!
     """
 
     c = pol_to_cart(params)
@@ -263,6 +264,11 @@ def mask_sum(data:np.ndarray,params,width:int=1) -> float:
     Create elliptic mask with x0,y0,a,b and calculate sum of `data` below the
     mask.
     """
+
+    # Check no of params is nan or inf
+    if np.isnan(params).any() or np.isinf(params).any():
+        print("Ellipse: NaN or Inf in parameters!")
+        return 0
     
     x0, y0, a, b, phi = fetch_params(params)
 

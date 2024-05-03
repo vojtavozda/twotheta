@@ -33,13 +33,16 @@ def display(ptx, pty, ellipse=None):
         ylim = pty.min(), pty.max()
         xlim = ptx.min(), ptx.max()
     ax.plot(ptx, pty, "ro", color="blue")
-    ax.set_xlim(*xlim)
-    ax.set_ylim(*ylim)
+    # ax.set_xlim(*xlim)
+    # ax.set_ylim(*ylim)
     plt.gca().invert_yaxis()
     plt.show()
 
-x = np.load('x_2.npy')
-y = np.load('y_2.npy')
+x = np.load('data/x_2.npy')
+y = np.load('data/y_2.npy')
+conic = np.load('data/conic_0.npy')
+x = conic[0]
+y = conic[1]
 
 ellipse = fit_ellipse(y,x)
 print(ellipse)

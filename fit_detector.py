@@ -32,20 +32,20 @@ two_theta_113 = 2*np.arcsin(wavelength/2/d_113)
 
 # ------------------------------------------------------------------------------
 # Load points of found ellipses from detector
-x_012 = np.load(f'x_0.npy')
-y_012 = np.load(f'y_0.npy')
+x_012 = np.load('data/x_0.npy')
+y_012 = np.load('data/y_0.npy')
 el_012 = np.array((x_012,y_012,np.zeros_like(x_012)))
 
-x_104 = np.load(f'x_2.npy')
-y_104 = np.load(f'y_2.npy')
+x_104 = np.load('data/x_2.npy')
+y_104 = np.load('data/y_2.npy')
 el_104 = np.array((x_104,y_104,np.zeros_like(x_104)))
 
-x_110 = np.load(f'x_4.npy')
-y_110 = np.load(f'y_4.npy')
+x_110 = np.load('data/x_4.npy')
+y_110 = np.load('data/y_4.npy')
 el_110 = np.array((x_110,y_110,np.zeros_like(x_110)))
 
-x_113 = np.load(f'x_6.npy')
-y_113 = np.load(f'y_6.npy')
+x_113 = np.load('data/x_6.npy')
+y_113 = np.load('data/y_6.npy')
 el_113 = np.array((x_113,y_113,np.zeros_like(x_113)))
 
 # ------------------------------------------------------------------------------
@@ -151,10 +151,13 @@ def objective(params):
 # ==============================================================================
 # parameters: (z0,phi,theta,psi,shift_x,shift_y)
 ansatz = [1200,0,-25/180*pi,0,-150,-1000]
-# ansatz = [1200,0,0.0,0,0,0]
+# ansatz = [1184,-1/180*pi,-32/180*pi,0,-160,-1030]
+# ansatz = [1100,0,-38.0,0,0,-500]
 bounds = ((100,5000),(-pi,pi),(-35/180*pi,35/180*pi),(-pi,pi),(-10000,10000),(-10000,10000))
-res = optimize.minimize(objective,ansatz,bounds=bounds)
+
+res = optimize.minimize(objective,ansatz,bounds=bounds,tol=1e-10)
 z0,phi,theta,psi,shift_x,shift_y = res.x
+
 print(f"SOS = {res.fun:.3f}")
 print("Calculated parameters:")
 print(f"z0 = {z0:.4f}")
@@ -163,3 +166,5 @@ print(f"theta = {theta*180/pi:.4f}°")
 print(f"psi = {psi*180/pi:.4f}°")
 print(f"x = {shift_x:.4f}")
 print(f"y = {shift_y:.4f}")
+
+print(f"z0,phi,theta,psi,shift_x,shift_y = [{z0:.4f},{phi:.4f},{theta:.4f},{psi:.4f},{shift_x:.4f},{shift_y:.4f}]")

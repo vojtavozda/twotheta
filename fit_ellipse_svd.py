@@ -124,22 +124,26 @@ noise = 0.1
 x += noise * np.random.normal(size=npts) 
 y += noise * np.random.normal(size=npts)
 
-x = np.load('x_4.npy')
-y = np.load('y_4.npy')
+# x = np.load('data/x_4.npy')
+# y = np.load('data/y_4.npy')
+# conic = np.load('data/conic_0.npy')
+# x = conic[0]
+# y = conic[1]
 
 coeffs = fit_ellipse(x, y)
 print('Exact parameters:')
-print('x0, y0, ap, bp, phi =', x0, y0, ap, bp, phi)
+print(f'x0={x0}, y0={y0}, ap={ap}, bp={bp}, phi={phi}')
 print('Fitted parameters:')
 print('a, b, c, d, e, f =', coeffs)
 x0, y0, ap, bp, e, phi = cart_to_pol(coeffs)
-print('x0, y0, ap, bp, e, phi = ', x0, y0, ap, bp, e, phi)
+print(f'x0={x0:.0f}, y0={y0:.0f}, ap={ap:.0f}, bp={bp:.0f}, e={e:.0f}, phi={phi:.0f}')
 
 plt.plot(x, y, 'x')     # given points
 x, y = get_ellipse_pts((x0, y0, ap, bp, e, phi))
 plt.plot(x, y)
 ax = plt.gca()
 ax.set_aspect('equal', adjustable='box')
+plt.gca().invert_yaxis()
 plt.show()
 # %%
 
