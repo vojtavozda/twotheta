@@ -1,3 +1,7 @@
+"""
+Script for extracting points from 2D Jungfrau data.
+"""
+
 # %%
 import os
 import numpy as np

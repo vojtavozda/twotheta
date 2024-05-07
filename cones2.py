@@ -121,7 +121,7 @@ shift_y = -1029.1911
 # shift_x = -161.8735
 # shift_y = -1061.7845
 
-z0,phi,theta,psi,shift_x,shift_y = [1199.9753,0.2374,-0.5179,-0.0000,-149.9912,-1000.0338]
+# z0,phi,theta,psi,shift_x,shift_y = [1199.9753,0.2374,-0.5179,-0.0000,-149.9912,-1000.0338]
 
 base_x = rotate3D((1,0,0),phi,theta,psi)
 base_y = rotate3D((0,1,0),phi,theta,psi)

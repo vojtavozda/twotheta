@@ -4,7 +4,7 @@ import numpy as np
 from numpy import cos, sin, tan, pi
 from scipy import optimize
 from matplotlib import pyplot as plt
-import ellipse as el
+import elliptools as el
 
 # Calculate two theta angles
 energy = 5.932                  # [keV]
@@ -25,10 +25,10 @@ two_theta0 = two_theta_012
 two_theta2 = two_theta_104
 
 # Load data
-data0_x = np.load(f'x_{0}.npy')
-data0_y = np.load(f'y_{0}.npy')
-data2_x = np.load(f'x_{2}.npy')
-data2_y = np.load(f'y_{2}.npy')
+data0_x = np.load('data/x_0.npy')
+data0_y = np.load('data/y_0.npy')
+data2_x = np.load('data/x_2.npy')
+data2_y = np.load('data/y_2.npy')
 
 def rotate_point(x,y,x0,y0,phi):
     """

@@ -1,6 +1,13 @@
 
 # %%
 
+# Main idea:
+# ----------
+# Sample is places at the origin (0,0,0) and beam is directed along the z-axis.
+# Diffraction creates cones with apexes at the origin.
+# We are looking for the position and orientation of the detector so found
+# conics (ellipses) on the detector match intersections of cones.
+
 import numpy as np
 from numpy import sin, cos, pi, tan
 from numpy.linalg import norm

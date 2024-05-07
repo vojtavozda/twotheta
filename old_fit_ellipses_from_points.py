@@ -5,7 +5,7 @@ import numpy as np
 from numpy import pi, sin, cos
 from matplotlib import pyplot as plt
 from matplotlib import patches
-import ellipse as el
+import elliptools as el
 import importlib
 from scipy import optimize
 import genlib as gl

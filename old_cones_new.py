@@ -5,15 +5,18 @@ import sys
 import numpy as np
 from numpy import pi, cos, sin, sqrt, tan
 from numpy import linalg as LA
+from clrprint import printc
 
 import matplotlib
 # WebAgg
 # matplotlib.use('module://matplotlib_inline.backend_inline',force=False)
 from matplotlib import pyplot as plt
-import ellipse as el
+import elliptools as el
 from genlib import plt_clrs
 import genlib as gl
 from scipy import optimize
+
+# %%
 
 # change current directory to the one where this script is located
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -41,54 +44,9 @@ ellipses for these cones are compared to experimental data and sums of squares
 are calculated. The function returns total sum of squares and tries to find cone
 parameters (V,z0,delta,phi) so this total sum is minimized.
 
-Tips
-----
 
 """
 
-two_theta = pi/8
-delta = pi/8
-
-# Define cone
-z_max = 1
-Z0 = np.array([0,0,0.7*z_max])
-a = np.linspace(0,2*np.pi,20)
-r = np.linspace(0,1,10)
-T, R = np.meshgrid(a, r)
-cone_X = R * cos(T) * tan(two_theta) * z_max
-cone_Y = R * sin(T) * tan(two_theta) * z_max
-cone_Z = R * z_max
-
-# Define plane
-n = np.array([sin(delta),0,cos(delta)])
-
-plane_X, plane_Y = np.meshgrid(
-    [np.min(cone_X)*1.5,np.max(cone_X)*1.5],
-    [np.min(cone_Y)*1.5,np.max(cone_Y)*1.5])
-plane_Z = (Z0@n - n[0]*plane_X - n[1]*plane_Y) / n[2]
-
-
-fig = plt.figure()
-ax = fig.add_subplot(111,projection='3d')
-
-ax.plot_surface(cone_X, cone_Y, cone_Z,alpha=0.5,antialiased=True,color=plt_clrs[0])
-ax.plot_wireframe(cone_X, cone_Y, cone_Z,color=plt_clrs[0],linewidth=0.5)
-ax.plot_surface(plane_X, plane_Y, plane_Z, alpha=0.3,antialiased=True,color='k')
-ax.plot_wireframe(plane_X, plane_Y, plane_Z,color='k',linewidth=0.5)
-
-# Plot z-axis
-ax.plot([0,0],[0,0],[Z0[2],z_max],c='k',ls=':')
-ax.plot([0,0],[0,0],[0,Z0[2]],c='k',ls='-')
-ax.plot(Z0[0],Z0[1],Z0[2],'.',color='k',markersize=10)
-
-ax.set_xlabel('x')
-ax.set_ylabel('y')
-ax.set_zlabel('z')
-ax.set_aspect('equal')
-
-plt.show()
-
-# %%
 
 # ------------------------------------------------------------------------------
 # Calculate two theta angles
@@ -106,17 +64,6 @@ two_theta_104 = 2*np.arcsin(wavelength/2/d_104)
 two_theta_110 = 2*np.arcsin(wavelength/2/d_110)
 two_theta_113 = 2*np.arcsin(wavelength/2/d_113)
 
-# ------------------------------------------------------------------------------
-# Calculated parameters using pyFAI are:
-# distance: 0.0010321342264403 [m]
-# PONI1:    0.0002829606114021 [m]
-# PONI2:    0.0001775045680058 [m]
-# Rot1:     0.0173670646845016 [rad]
-# Rot2:     0.6732451185851951 [rad]
-# Rot3:    -0.0004043452479840 [rad]
-
-
-# %%
 
 def delta_diff(delta,a,z0,two_theta):
 
@@ -161,20 +108,9 @@ def rotate_point(x,y,x0,y0,phi):
     return x_new, y_new
 
 # Define primary ellipse for which we find a cone -------
-two_theta = 35/180*pi
-two_theta = two_theta_012
-params = (1,2,4,3,1*pi/4)
-# params = (1,2,3,4,3*pi/4)
+two_theta = 0.4
+params = (0, 0, 2, 1.5, 0.5)
 
-params = (283, 658, 486, 292, 0.27) # SVD fit of ellipse 0 ()
-# params = (281, 761, 571, 400, 0.34) # SVD fit of ellipse 1 ()
-# params = (498, 588, 781, 407, 0.41) # SVD fit of ellipse 2 ()
-# params = (490, 759, 937, 580, 0.47) # SVD fit of ellipse 3 ()
-# params = (518, 336, 651, 241, 0.32) # SVD fit of ellipse 4 ()
-# params = (-14, 2010, 2000, 1712, pi/2+0.3) # SOS fit of ellipse 4 ()
-# params = (516, 392, 732, 311, 0.32) # SVD fit of ellipse 5 ()
-# params = (914,  38,  89,   5, 0.39) # SVD fit of ellipse 6 ()
-# params = (955,  26,  55,   2, 0.40) # SVD fit of ellipse 7 ()
 # -------------------------------------------------------
 cx,cy,a,b,phi = params
 ex,ey = el.get_ellipse_pts(params)
@@ -183,27 +119,18 @@ z0 = b/tan(two_theta)
 
 delta = get_delta(a,z0,two_theta)
 
-# res = optimize.minimize(delta_diff,1.5,args=(a,z0,two_theta))
-# print("Found delta:",res.x*180/pi)
-# delta = res.x[0]-90
-# delta_arr = np.linspace(0,2*pi,100)
-# a_arr = z0*sin(two_theta)/2*(1/cos(two_theta+delta_arr)+1/cos(two_theta-delta_arr))
-# plt.plot(delta_arr*180/pi,a_arr)
-# plt.plot([0,360],[a,a],ls='--',c='k')
-# plt.ylim(-20,20)
 
 s = z0*sin(two_theta)/2*(1/cos(two_theta+delta)-1/(cos(two_theta-delta)))
 V = np.array([0,0,0]).astype(float)
-V[0] = cx+s+z0*sin(delta)
+V[0] = -(cx+s+z0*sin(delta))
 V[1] = cy
 V[2] = z0*cos(delta)
 
-print(V[0],V[1])
 
 # Rotate cone apex by phi around ellipse center
 V[0],V[1] = rotate_point(V[0],V[1],cx,cy,phi)
 # Calculate direction of cone axis
-n = np.array([sin(delta),0,cos(delta)])
+n = np.array([-sin(delta),0,cos(delta)])
 # Rotate this vector around origin (it is a vector)
 n[0],n[1] = rotate_point(n[0],n[1],0,0,phi)
 print("|n| = ",LA.norm(n))
@@ -237,43 +164,6 @@ cone_x = S[0]-n[0]*c + r*cos(t)*a[0] + r*sin(t)*b[0]
 cone_y = S[1]-n[1]*c + r*cos(t)*a[1] + r*sin(t)*b[1]
 cone_z = S[2]-n[2]*c + r*cos(t)*a[2] + r*sin(t)*b[2]
 
-# ------------------------------------------------------------------------------
-# Find new ellipse for secondary cone with different two_theta
-# All these equations are taken from above but solve for new ellipse params
-two_theta2 = 40/180*pi
-two_theta2 = two_theta_104
-b2 = z0*tan(two_theta2)
-s2 = z0*sin(two_theta2)/2*(1/cos(two_theta2+delta)-1/(cos(two_theta2-delta)))
-V2 = V.copy()
-V2[0],V2[1] = rotate_point(V2[0],V2[1],cx,cy,-phi)
-cx2 = V2[0]-s2-z0*sin(delta)
-cy2 = V2[1]
-cx2,cy2 = rotate_point(cx2,cy2,cx,cy,phi)
-a2 = z0*sin(two_theta2)/2*(1/cos(two_theta2+delta)+1/cos(two_theta2-delta))
-ex2,ey2 = el.get_ellipse_pts((cx2,cy2,a2,b2,phi))
-
-# Calculate coordinates of rotated major axis
-Am2 = [cx2-a2,cy2,0]
-Am2[0],Am2[1] = rotate_point(Am2[0],Am2[1],cx2,cy2,phi)
-Ap2 = [cx2+a2,cy2,0]
-Ap2[0],Ap2[1] = rotate_point(Ap2[0],Ap2[1],cx2,cy2,phi)
-
-# Calculate coordinates of rotated minor axis
-Bm2 = [cx2,cy2-b2,0]
-Bm2[0],Bm2[1] = rotate_point(Bm2[0],Bm2[1],cx2,cy2,phi)
-Bp2 = [cx2,cy2+b2,0]
-Bp2[0],Bp2[1] = rotate_point(Bp2[0],Bp2[1],cx2,cy2,phi)
-
-# Calculate secondary cone circle
-a2 = np.array([Ap2[0],Ap2[1],(-Ap2[0]*n[0]-Ap2[0]*n[1])/n[2]])
-a2 = a2/LA.norm(a2)
-b2 = np.cross(a2,n)
-
-t = np.linspace(0,2*np.pi,50)   # Parameter of the circle
-r = (z0+c)*tan(two_theta2)       # Radius of the circle
-cone2_x = S[0]-n[0]*c + r*cos(t)*a2[0] + r*sin(t)*b2[0]
-cone2_y = S[1]-n[1]*c + r*cos(t)*a2[1] + r*sin(t)*b2[1]
-cone2_z = S[2]-n[2]*c + r*cos(t)*a2[2] + r*sin(t)*b2[2]
 
 # ------------------------------------------------------------------------------
 # Plot all the data
@@ -283,25 +173,12 @@ fig = plt.figure()
 ax = fig.add_subplot(111,projection='3d')
 ax.set_proj_type('ortho',None) # persp,0.1
 
-# data = np.load("data.npy")
-# data[data<0] = 0
-# data[data>30] = 30
-# xx,yy = np.meshgrid(np.arange(1024),np.arange(512))
-# ax.contourf(xx, yy, data, 100, zdir='z', offset=-0.1, cmap="plasma")
-
-# Plot fitted ellipses from Jungfrau detector ----------------------------------
-for i in range(8):
-    x = np.load(os.path.join('data',f'x_{i}.npy'))
-    y = np.load(os.path.join('data',f'y_{i}.npy'))
-    cart = el.fit_ellipse(x,y)
-    params = el.cart_to_pol(cart)
-    xel,yel = el.get_ellipse_pts(params)
-    ax.plot(xel,yel,np.zeros(len(xel)),ls='--',c='k',lw=0.5)
 
 # Plot cone --------------------------------------------------------------------
 ax.plot(V[0],V[1],V[2],'.',color='k',markersize=10)     # V  - cone apex
 ax.plot(S[0],S[1],S[2],'.',color='k',markersize=10)     # S  - cone axis
 ax.plot([V[0],S[0]],[V[1],S[1]],[V[2],S[2]],c='k',ls='--')
+
 
 # Plot primary ellipse ---------------------------------------------------------
 ax.plot(ex,ey,c=plt_clrs[0],lw=lw1)
@@ -311,23 +188,13 @@ t = np.array([-5,5])
 ax.plot([Am[0],Ap[0]],[Am[1],Ap[1]],[Am[2],Ap[2]],c=plt_clrs[0],ls='--',lw=lw2)
 ax.plot([Bm[0],Bp[0]],[Bm[1],Bp[1]],[Bm[2],Bp[2]],c=plt_clrs[0],ls='--',lw=lw2)
 
-ax.plot(cone_x,cone_y,cone_z,c=plt_clrs[2],lw=lw2)
+# ax.plot(cone_x,cone_y,cone_z,c=plt_clrs[2],lw=lw2)
 
 ax.plot([V[0],Ap[0]],[V[1],Ap[1]],[V[2],Ap[2]],c=plt_clrs[2],lw=lw2)
 ax.plot([V[0],Am[0]],[V[1],Am[1]],[V[2],Am[2]],c=plt_clrs[2],lw=lw2)
 ax.plot([V[0],Bp[0]],[V[1],Bp[1]],[V[2],Bp[2]],c=plt_clrs[2],lw=lw2)
 ax.plot([V[0],Bm[0]],[V[1],Bm[1]],[V[2],Bm[2]],c=plt_clrs[2],lw=lw2)
 
-# Plot secondary ellipse -------------------------------------------------------
-ax.plot(ex2,ey2,c=plt_clrs[3],lw=lw1)
-ax.plot(cx2,cy2,0,'.',color=plt_clrs[3],markersize=10)    # S0 - ellipse center
-ax.plot(cone2_x,cone2_y,cone2_z,c=plt_clrs[1],lw=lw2)
-ax.plot([Am2[0],Ap2[0]],[Am2[1],Ap2[1]],[Am2[2],Ap2[2]],c=plt_clrs[3],ls='--',lw=lw2)
-ax.plot([Bm2[0],Bp2[0]],[Bm2[1],Bp2[1]],[Bm2[2],Bp2[2]],c=plt_clrs[3],ls='--',lw=lw2)
-ax.plot([V[0],Ap2[0]],[V[1],Ap2[1]],[V[2],Ap2[2]],c=plt_clrs[1],lw=lw2)
-ax.plot([V[0],Am2[0]],[V[1],Am2[1]],[V[2],Am2[2]],c=plt_clrs[1],lw=lw2)
-ax.plot([V[0],Bp2[0]],[V[1],Bp2[1]],[V[2],Bp2[2]],c=plt_clrs[1],lw=lw2)
-ax.plot([V[0],Bm2[0]],[V[1],Bm2[1]],[V[2],Bm2[2]],c=plt_clrs[1],lw=lw2)
 
 ax.set_xlim([np.min(ex),np.max(ex)])
 ax.set_ylim([np.min(ey),np.max(ey)])
@@ -337,7 +204,9 @@ ax.set_xlabel('x')
 ax.set_ylabel('y')
 ax.set_zlabel('z')
 ax.set_aspect('equal')
-ax.view_init(90, -90)
+# ax.view_init(90, -90) # 3D view
+# ax.view_init(0, -90) # Side view
+# ax.view_init(0, 0) # Front view
 
 
 plt.show()

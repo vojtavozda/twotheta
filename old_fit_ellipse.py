@@ -67,7 +67,7 @@ for r,v in zip(R,V):
 data[data<0] = 0
 data += (np.random.random(data.shape)-0.5)*50
 
-data = np.load("data.npy")
+data = np.load("data/data.npy")
 data[data<0] = 0
 data[data>30] = 30
 
@@ -90,7 +90,7 @@ plt.show()
 
 # %%
 
-data = np.load("data.npy")
+data = np.load("data/data.npy")
 data[data<0] = 0
 data[data>30] = 30
 

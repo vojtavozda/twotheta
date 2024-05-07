@@ -40,9 +40,9 @@ def display(ptx, pty, ellipse=None):
 
 x = np.load('data/x_2.npy')
 y = np.load('data/y_2.npy')
-conic = np.load('data/conic_0.npy')
-x = conic[0]
-y = conic[1]
+# conic = np.load('data/conic_104.npy')
+# x = conic[0]
+# y = conic[1]
 
 ellipse = fit_ellipse(y,x)
 print(ellipse)
