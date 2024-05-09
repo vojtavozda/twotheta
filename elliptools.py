@@ -143,12 +143,12 @@ class Cone:
         ax.plot(S[0],S[1],S[2],'.',color='k',markersize=10)     # S  - cone axis
         ax.plot([V[0],S[0]],[V[1],S[1]],[V[2],S[2]],c='k',ls='--')
 
-    def print(self):
+    def print(self,f:int=2):
 
         printc("Cone: ",fw='b',fc='g',end="")
-        printc(f"Apex=[{self.apex[0]:.1f},{self.apex[1]:.1f},{self.apex[2]:.1f}]",fc='g',end=' ')
-        printc(f"Axis=[{self.n[0]:.1f},{self.n[1]:.1f},{self.n[2]:.1f}]",fc='g',end=' ')
-        printc(f"theta={self.theta:.2f} ({self.theta*180/pi:.0f})°",fc='g')
+        printc(f"Apex=[{self.apex[0]:.{f}f},{self.apex[1]:.{f}f},{self.apex[2]:.{f}f}]",fc='g',end=' ')
+        printc(f"Axis=[{self.n[0]:.{f}f},{self.n[1]:.{f}f},{self.n[2]:.{f}f}]",fc='g',end=' ')
+        printc(f"theta={self.theta:.{f}f} ({self.theta*180/pi:.{f}f})°",fc='g')
 
 # =================================[ ELLIPSE ]==================================
 class Ellipse:
@@ -359,6 +359,10 @@ class Ellipse:
             ax.plot([Am[0],Ap[0]],[Am[1],Ap[1]],[Am[2],Ap[2]],c=self.clr,ls='--',lw=1)
             # Semi-minor axis
             ax.plot([Bm[0],Bp[0]],[Bm[1],Bp[1]],[Bm[2],Bp[2]],c=self.clr,ls='--',lw=1)
+            # Foci
+            ax.plot([self.x0+self.c*cos(self.phi),self.x0-self.c*cos(self.phi)],
+                    [self.y0+self.c*sin(self.phi),self.y0-self.c*sin(self.phi)],
+                    [0,0],'.',c=self.clr,markersize=5,lw=1)
 
         if plotCone:
             self.plotCone(ax)
@@ -409,7 +413,7 @@ class Ellipse:
 
     def print(self):
         printc("Ellipse: ",fw='b',fc='b',end="")
-        printc(f"x0={self.x0:.2f}, y0={self.y0:.2f}, a={self.a:.2f}, b={self.b:.2f}, phi={self.phi:.2f} ({(self.phi*180/pi):.0f})°",fc='b')
+        printc(f"x0={self.x0:.2f}, y0={self.y0:.2f}, a={self.a:.2f}, b={self.b:.2f}, phi={self.phi:.2f} ({(self.phi*180/pi):.2f})°",fc='b')
 
 # ==================================[ OTHER ]===================================
 
