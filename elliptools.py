@@ -1,3 +1,6 @@
+# This module is required to use name of class before it is defined
+from __future__ import annotations
+
 import numpy as np
 from numpy import pi, sin, cos, tan, sqrt
 from numpy.linalg import norm
@@ -57,14 +60,90 @@ def rotate3D(data:np.ndarray,phi:float,theta:float,psi:float):
 
     return R@data
 
+
+
 # ===================================[ CONE ]===================================
 class Cone:
 
-    def __init__(self,apex:np.ndarray,axis:np.ndarray,theta:float):
+    def __init__(self,
+                 apex:np.ndarray,
+                 axis:np.ndarray,
+                 theta:float,
+                 color = plt_clrs[0]):
+        
+        assert np.abs(np.linalg.norm(axis)-1) < 1e-10, \
+            f"Axis vector must be normalized but |n|={np.linalg.norm(axis)}!"
+        
         self.apex = apex
         self.n = axis
         self.theta = theta
+        self.ellipse:Ellipse = None
+        self.clr = self.setColor(color)
 
+    def setColor(self,clr):
+        if isinstance(clr,int):
+            self.clr = plt_clrs[clr]
+        elif isinstance(clr,str):
+            self.clr = clr
+        else:
+            raise ValueError("Color must be either int or str!")
+        return self.clr
+
+    def getEllipse(self) -> Ellipse:
+
+        """ """
+
+        n = np.copy(self.n)
+        theta = self.theta
+        # Find angle phi (rotation of ellipse semi-major axis from x-axis)
+        phi = 0
+        if n[0]!=0 or n[1]!=0:
+            phi = pi-np.arccos(n[0]/sqrt(n[0]**2+n[1]**2))
+        
+        # Find two vectors which point from apex to ends of semi-major axis
+        n2 = rotate3D(n,phi,0,0)
+        n3 = np.zeros(3)
+        n3[0] = n2[0]*cos(theta)-n2[2]*sin(theta)
+        n3[1] = n2[1]
+        n3[2] = n2[0]*sin(theta)+n2[2]*cos(theta)
+        n4 = rotate3D(n3,-phi,0,0)
+        n5 = np.zeros(3)
+        n5[0] = n2[0]*cos(theta)+n2[2]*sin(theta)
+        n5[1] = n2[1]
+        n5[2] = -n2[0]*sin(theta)+n2[2]*cos(theta)
+        n6 = rotate3D(n5,-phi,0,0)
+
+        V = self.apex
+        # Find semi-major axis end points
+        sM1 = np.array([V[0]-V[2]/n4[2]*n4[0],V[1]-V[2]/n4[2]*n4[1]])
+        sM2 = np.array([V[0]-V[2]/n6[2]*n6[0],V[1]-V[2]/n6[2]*n6[1]])
+        # Calculate semi-major axis length
+        a = sqrt((sM1[0]-sM2[0])**2+(sM1[1]-sM2[1])**2)/2
+
+        # Find center of ellipse 
+        x0 = ((V[0]-V[2]/n4[2]*n4[0])+(V[0]-V[2]/n6[2]*n6[0]))/2
+        y0 = ((V[1]-V[2]/n4[2]*n4[1])+(V[1]-V[2]/n6[2]*n6[1]))/2
+
+        # Define sides of the triangle
+        tA = 2*a                                                # c
+        tB = sqrt((V[0]-sM1[0])**2+(V[1]-sM1[1])**2+V[2]**2)    # b
+        tC = sqrt((V[0]-sM2[0])**2+(V[1]-sM2[1])**2+V[2]**2)    # a
+
+        # Find radius of Dandelin sphere
+        s = (tA+tB+tC)/2
+        r = sqrt((s-tA)*(s-tB)*(s-tC)/s)
+
+        # Find c and b (via cosine theorem and angle beta)
+        beta = np.arccos((tA**2+tC**2-tB**2)/(2*tA*tC))
+        l = r/tan(beta/2)
+        c = l-a
+        b = sqrt(a**2-c**2)
+
+        return Ellipse(x0=x0,y0=y0,a=a,b=b,phi=phi,theta=theta,color=self.clr)
+
+    def findEllipse(self):
+        self.ellipse = self.getEllipse()
+        return self.ellipse
 
     def getMesh(self, length:float) -> tuple:
         """
@@ -110,7 +189,7 @@ class Cone:
         return X, Y, Z
 
 
-    def plotMesh(self,ax:plt.Axes,length:float):
+    def plotMesh(self,ax:plt.Axes,length:float,plotDandelin:bool=False,color:str=None):
         """
         Plot a cone in 3D space.
         
@@ -122,17 +201,39 @@ class Cone:
         length (float): The length of the cone.
         """
 
+        if color is None: color = self.clr
+
         cone_X, cone_Y, cone_Z = self.getMesh(length)
 
         ax.plot(self.apex[0],self.apex[1],self.apex[2],'.',color='k',markersize=5)
-        # ax.plot([self.apex[0],self.apex[0]+self.n[0]*1e6],
-        #         [self.apex[1],self.apex[1]+self.n[1]*1e6],
-        #         [self.apex[2],self.apex[2]+self.n[2]*1e6],
-        #         'k',linestyle='--',linewidth=0.5)
         ax.plot_surface(cone_X,cone_Y,cone_Z,alpha=0.2,antialiased=True,color=plt_clrs[0])
         ax.plot_wireframe(cone_X,cone_Y,cone_Z,color=plt_clrs[0],linewidth=0.1)
 
-    def plotWireframe(self,ax:plt.Axes):
+        # Dandelin sphere
+        if plotDandelin:
+            V = self.apex
+            el = self.getEllipse()
+            sM1 = np.array([el.x0-el.a*cos(el.phi),el.y0-el.a*sin(el.phi),0])
+            sM2 = np.array([el.x0+el.a*cos(el.phi),el.y0+el.a*sin(el.phi),0])
+            # Define sides of the triangle
+            tA = 2*el.a                                         
+            tB = sqrt((V[0]-sM1[0])**2+(V[1]-sM1[1])**2+V[2]**2)
+            tC = sqrt((V[0]-sM2[0])**2+(V[1]-sM2[1])**2+V[2]**2)
+            # Find radius of Dandelin sphere
+            s = (tA+tB+tC)/2
+            r = sqrt((s-tA)*(s-tB)*(s-tC)/s)
+
+            plotSphere(ax,
+                       el.x0+el.c*cos(el.phi),
+                       el.y0+el.c*sin(el.phi),
+                       r,
+                       r,
+                       color=self.clr)
+
+
+    def plotWireframe(self,ax:plt.Axes,plotDandelin:bool=False,color:str=None):
+
+        if color is None: color = self.clr
 
         V = self.apex
         # Find coordinates of point where cone axis intersects plane z=0
@@ -140,8 +241,39 @@ class Cone:
                       V[1]-V[2]*self.n[1]/self.n[2],0])
 
         ax.plot(V[0],V[1],V[2],'.',color='k',markersize=10)     # V  - cone apex
-        ax.plot(S[0],S[1],S[2],'.',color='k',markersize=10)     # S  - cone axis
+        ax.plot(S[0],S[1],S[2],'.',color='k',markersize=5)     # S  - cone axis
         ax.plot([V[0],S[0]],[V[1],S[1]],[V[2],S[2]],c='k',ls='--')
+
+        el = self.getEllipse()
+        # Endpoints of semi-major and semi-minor axes
+        sM1 = np.array([el.x0-el.a*cos(el.phi),el.y0-el.a*sin(el.phi),0])
+        sM2 = np.array([el.x0+el.a*cos(el.phi),el.y0+el.a*sin(el.phi),0])
+        sm1 = np.array([el.x0+el.b*sin(el.phi),el.y0-el.b*cos(el.phi),0])
+        sm2 = np.array([el.x0-el.b*sin(el.phi),el.y0+el.b*cos(el.phi),0])
+        ax.plot([V[0],sM1[0]],[V[1],sM1[1]],[V[2],sM1[2]],c=self.clr)
+        ax.plot([V[0],sM2[0]],[V[1],sM2[1]],[V[2],sM2[2]],c=self.clr)
+        ax.plot([V[0],sm1[0]],[V[1],sm1[1]],[V[2],sm1[2]],c=self.clr)
+        ax.plot([V[0],sm2[0]],[V[1],sm2[1]],[V[2],sm2[2]],c=self.clr)
+
+        # Dandelin sphere
+        if plotDandelin:
+            # Define sides of the triangle
+            tA = 2*el.a                                         
+            tB = sqrt((V[0]-sM1[0])**2+(V[1]-sM1[1])**2+V[2]**2)
+            tC = sqrt((V[0]-sM2[0])**2+(V[1]-sM2[1])**2+V[2]**2)
+            # Find radius of Dandelin sphere
+            s = (tA+tB+tC)/2
+            r = sqrt((s-tA)*(s-tB)*(s-tC)/s)
+
+            t = np.linspace(0,2*np.pi,50)   # Parameter of the circle
+            danX = el.x0 + el.c*cos(el.phi) + r*cos(t)*cos(el.phi)
+            danY = el.y0 + el.c*sin(el.phi) + r*cos(t)*sin(el.phi)
+            danZ = r + r*sin(t)
+            ax.plot(danX,danY,danZ,color=self.clr)
+            danX = el.x0 + el.c*cos(el.phi) - r*cos(t)*sin(el.phi)
+            danY = el.y0 + el.c*sin(el.phi) + r*cos(t)*cos(el.phi)
+            danZ = r + r*sin(t)
+            ax.plot(danX,danY,danZ,color=self.clr)
 
     def print(self,f:int=2):
 
@@ -149,6 +281,8 @@ class Cone:
         printc(f"Apex=[{self.apex[0]:.{f}f},{self.apex[1]:.{f}f},{self.apex[2]:.{f}f}]",fc='g',end=' ')
         printc(f"Axis=[{self.n[0]:.{f}f},{self.n[1]:.{f}f},{self.n[2]:.{f}f}]",fc='g',end=' ')
         printc(f"theta={self.theta:.{f}f} ({self.theta*180/pi:.{f}f})°",fc='g')
+
+
 
 # =================================[ ELLIPSE ]==================================
 class Ellipse:
@@ -169,7 +303,7 @@ class Ellipse:
         self.a = a
         self.b = b
         self.phi = phi
-        self.cone = None
+        self.cone:Cone = None
         self.xData = xData
         self.yData = yData
         self.theta = theta
@@ -177,24 +311,6 @@ class Ellipse:
             self.c = sqrt(a**2-b**2)
 
         self.clr = color
-
-    def _get_delta(self,z0,two_theta):
-        """
-        Solve 'a=(|SA|+|SB|)/2' for delta:
-        """
-        sTT = sin(two_theta)
-        cTT = cos(two_theta)
-
-        det = z0**2*sTT**2*cTT**2-4*self.a**2*(cTT**2-1)
-
-        cos_deltaP = (z0*sTT*cTT + sqrt(det)) / (2*self.a)
-        cos_deltaM = (z0*sTT*cTT - sqrt(det)) / (2*self.a)
-
-        deltaP = np.arccos(cos_deltaP)
-        deltaM = np.arccos(cos_deltaM)
-
-        print(f"Found delta+ = {deltaP*180/pi:.0f}° and delta- = {deltaM*180/pi:.0f}°")
-        return deltaP
 
     def _get_semi_major(self):
         """ Calculate coordinates of rotated major axis """
@@ -212,8 +328,45 @@ class Ellipse:
         Bp[0],Bp[1] = rotate_point(Bp[0],Bp[1],self.x0,self.y0,self.phi)
         return Bm, Bp
 
+    def _get_cartesian(self):
+        """
+        Convert the ellipse params = x0, y0, a, b, phi to cartesian coefficients
+        (a,b,c,d,e,f), where F(x,y) = ax^2 + bxy + cy^2 + dx + ey + f = 0.
+
+        Coefficients are provided here: https://math.stackexchange.com/a/2989928
+        But they can be easily calculated from the ellipse equation as written here:
+        https://math.stackexchange.com/a/434482, multiplying all squares and find
+        coefficients for x**2, y**2, ...
+
+        """
+
+        x0, y0, a, b, phi = self.x0, self.y0, self.a, self.b, self.phi
+
+        cP = cos(phi)
+        sP = sin(phi)
+        s2P = sin(2*phi)
+        
+        c = np.zeros(6)
+
+        if a==0 or b==0:
+            return c
+
+        c[0] = cP**2/a**2 + sP**2/b**2
+        c[1] = s2P/a**2 - s2P/b**2
+        c[2] = sP**2/a**2 + cP**2/b**2
+        c[3] = -2*x0*cP**2/a**2 - y0*s2P/a**2 - 2*x0*sP**2/b**2 + y0*s2P/b**2
+        c[4] = -x0*s2P/a**2 - 2*y0*sP**2/a**2 + x0*s2P/b**2 - 2*y0*cP**2/b**2
+        c[5] = (x0**2*cP**2/a**2 + x0*y0*s2P/a**2 + y0**2*sP**2/a**2 + 
+                x0**2*sP**2/b**2 - x0*y0*s2P/b**2 + y0**2*cP**2/b**2 - 1)
+
+        return c
+
     def setPlotColor(self,clr:str):
         self.clr = clr
+
+    def setData(self,xData:np.ndarray,yData:np.ndarray):
+        self.xData = xData
+        self.yData = yData
 
     def getPoints(self,npts:int=100,tmin:float=0,tmax:float=2*pi) -> tuple:
         """
@@ -292,82 +445,129 @@ class Ellipse:
         ak = eigvec[:, np.nonzero(con > 0)[0]]
         params = cart_to_pol(np.concatenate((ak, T @ ak)).ravel())
         self.x0, self.y0, self.a, self.b, self.phi = params
-
-    def findEllipseFromCone(self):
-
-        n = self.cone.n
-        assert np.linalg.norm(n) == 1, "Cone axis must be a unit vector!"
-
-        phi = cos(n[0]/np.linalg.norm(n))
-        n2 = rotate3D(n,-phi,0,0)
-        n3 = rotate3D(n2,0,self.theta,0)
-        n4 = rotate3D(n3,phi,0,0)
-        return n4
+        self.c = sqrt(self.a**2-self.b**2)
 
 
-    def getCone(self,theta:float) -> Cone:
+    def getCone(self,theta:float=None) -> Cone:
         """
-        Get a cone from the ellipse.
+        Geometry: Ellipse is in xy plane, cone apex is in positive z. Looking
+        from side (semi-minor axis) the cone apex and semi-major axis create a
+        triangle. Lets denote points of semi-major axis as A and B, cone apex as
+        C. Side oposite to triangle apexes are a,b,c. We know angle at C
+        (two_theta), side c (2*self.a = semi-major axis) and touchpoint S where
+        inscribed circle touches side c (this is one of two ellipse focal
+        points). Using cosine theorem and some equation for touchpoint position
+        we can calculate sides a a and b.
+        ------------------------------------------------------------------------
+        Old (wrong) version of this function using some angle `delta` can be
+        found in repo history.
         """
 
-        z0 = self.b/tan(theta)
-        delta = self._get_delta(z0,theta)
-        s = z0*sin(theta)/2*(1/cos(theta+delta)-1/(cos(theta-delta)))
-        V = np.array([0,0,0]).astype(float)
-        V[0] = (self.x0+s+z0*sin(delta))
-        V[1] = self.y0
-        V[2] = z0*cos(delta)
+        if theta is None:
+            theta = self.theta
+            if theta is None:
+                printc("Cone angle not defined!",tag='e')
+                return
+        
+        # Define some constants
+        C = self.c
+        A = self.a
+        G = cos(2*theta)
+        c = 2*self.a
+        # Find length of side b using cosine theorem
+        #   'cos(G) = (a^2+b^2-c^2)/(2*a*b)' and touchpoint S
+        #   ' '
+        b = C-sqrt((G-1)*(C**2*(G+1)-2*A**2))/(G-1)
+        a = b-2*self.c
+        # Find angle at A using cosine theorem
+        alpha = np.arccos((b**2+c**2-a**2)/(2*b*c))
 
-        # Rotate cone apex by phi around ellipse center
-        V[0],V[1] = rotate_point(V[0],V[1],self.x0,self.y0,self.phi)
-        # Calculate direction of cone axis
-        n = np.array([-sin(delta),0,-cos(delta)])
-        # Rotate this vector around origin (it is a vector)
-        n[0],n[1] = rotate_point(n[0],n[1],0,0,self.phi)
-        n = n/np.linalg.norm(n)
+        # Find coordinates of cone apex
+        phi = self.phi
+        W = np.array((0,0,0))*0.1
+        W[2] = b*sin(alpha)
+        delta = W[2]/tan(alpha)-self.a
+        W[0] = self.x0 + delta*cos(phi)
+        W[1] = self.y0 + delta*sin(phi)
 
-        return Cone(V,n,theta)
+        # Vector which points from the apex to point A
+        wa2 = np.array(((self.x0+self.a*cos(phi))-W[0],
+                        (self.y0+self.a*sin(phi))-W[1],
+                        -W[2]))
+        wa2 = wa2/np.linalg.norm(wa2)
+
+        # Use this vector to find unit cone axis vector
+        # First, rotate by phi
+        wa2_2 = rotate3D(wa2,phi,0,0)
+        # Second, rotate by theta
+        wa2_3 = np.zeros(3)
+        wa2_3[0] = wa2_2[0]*cos(theta)+wa2_2[2]*sin(theta)
+        wa2_3[1] = wa2_2[1]
+        wa2_3[2] = -wa2_2[0]*sin(theta)+wa2_2[2]*cos(theta)
+        # Finally, rotate by -phi
+        ws = rotate3D(wa2_3,-phi,0,0)
+        ws = ws/np.linalg.norm(ws)
+
+        return Cone(W,ws,theta,color=self.clr)
+
 
     def findCone(self,theta:float=None):
         theta = self.theta if theta is None else theta
         self.cone = self.getCone(theta)
         return self.cone
 
-    def plotData(self,ax:plt.Axes,**kwargs):
-        ax.plot(self.xData,self.yData,'.',color=self.clr,**kwargs)
+    def plotData(self,ax:plt.Axes,color=None,**kwargs):
+
+        if color is None:
+            color = self.clr
+        elif isinstance(color,int):
+            color = plt_clrs[color]
+        else:
+            raise ValueError("'dataColor' must be either int or str!")
+        
+        ax.plot(self.xData,self.yData,'.',color=color,**kwargs)
 
     def plot(self,
              ax:plt.Axes,
+             color=None,
              plotAxes:bool=False,
              plotData:bool=False,
-             plotCone:bool=False
+             dataColor=None
              ):
+
+        if color is None:
+            color = self.clr
+        elif isinstance(color,int):
+            color = plt_clrs[color]
+        else:
+            raise ValueError("'color' must be either int or str!")
 
         x,y = self.getPoints()
         # Ellipse itself
-        ax.plot(x,y,color=self.clr)
+        ax.plot(x,y,color=color)
 
         if plotData and self.xData is not None and self.yData is not None:
-            self.plotData(ax)
+            self.plotData(ax,color=dataColor)
 
         if plotAxes:
             # Ellipse center
-            ax.plot(self.x0,self.y0,0,'.',color=self.clr,markersize=10)
+            ax.plot(self.x0,self.y0,0,'.',color=color,markersize=10)
             Am, Ap = self._get_semi_major()
             Bm, Bp = self._get_semi_minor()
             # Semi-major axis
-            ax.plot([Am[0],Ap[0]],[Am[1],Ap[1]],[Am[2],Ap[2]],c=self.clr,ls='--',lw=1)
+            ax.plot([Am[0],Ap[0]],[Am[1],Ap[1]],[Am[2],Ap[2]],c=color,ls='--',lw=1)
             # Semi-minor axis
-            ax.plot([Bm[0],Bp[0]],[Bm[1],Bp[1]],[Bm[2],Bp[2]],c=self.clr,ls='--',lw=1)
+            ax.plot([Bm[0],Bp[0]],[Bm[1],Bp[1]],[Bm[2],Bp[2]],c=color,ls='--',lw=1)
             # Foci
             ax.plot([self.x0+self.c*cos(self.phi),self.x0-self.c*cos(self.phi)],
                     [self.y0+self.c*sin(self.phi),self.y0-self.c*sin(self.phi)],
-                    [0,0],'.',c=self.clr,markersize=5,lw=1)
+                    [0,0],'.',c=color,markersize=5,lw=1)
 
-        if plotCone:
-            self.plotCone(ax)
 
     def plotCone(self,ax:plt.Axes):
+
+        # Raise error that this function is deprecated
+        raise DeprecationWarning("This function is deprecated. Use Cone::plotMesh() instead.")
 
         if self.cone is None:
             if self.theta is None:
@@ -411,9 +611,19 @@ class Ellipse:
         ax.plot([V[0],Bp[0]],[V[1],Bp[1]],[V[2],Bp[2]],c=self.clr,lw=1)
         ax.plot([V[0],Bm[0]],[V[1],Bm[1]],[V[2],Bm[2]],c=self.clr,lw=1)
 
-    def print(self):
+    def getSOS(self) -> float:
+        c = self._get_cartesian()
+        x,y = self.xData,self.yData
+
+        D = np.vstack([x**2, x*y, y**2, x, y, np.ones(len(x))]).T
+        N = D @ c
+        return np.sum(N**2)
+
+    def print(self,f:int=2):
         printc("Ellipse: ",fw='b',fc='b',end="")
-        printc(f"x0={self.x0:.2f}, y0={self.y0:.2f}, a={self.a:.2f}, b={self.b:.2f}, phi={self.phi:.2f} ({(self.phi*180/pi):.2f})°",fc='b')
+        printc(f"x0={self.x0:.{f}f}, y0={self.y0:.{f}f}, a={self.a:.{f}f}, b={self.b:.{f}f}, phi={self.phi:.{f}f} ({(self.phi*180/pi):.{f}f})°",fc='b')
+
+
 
 # ==================================[ OTHER ]===================================
 
@@ -729,7 +939,7 @@ def getSphere(x0, y0, z0, radius):
     Z = z0+cos(v)*radius
     return X,Y,Z
 
-def plotSpehre(ax:plt.Axes,x0:float,y0:float,z0:float,radius:float):
+def plotSphere(ax:plt.Axes,x0:float,y0:float,z0:float,radius:float,color:str=plt_clrs[0]):
     """
     Plot a sphere in 3D space.
     
@@ -743,8 +953,8 @@ def plotSpehre(ax:plt.Axes,x0:float,y0:float,z0:float,radius:float):
 
     sphere_X, sphere_Y, sphere_Z = getSphere(x0,y0,z0,radius)
     ax.plot(x0,y0,z0,'.',color='k',markersize=5)
-    ax.plot_surface(sphere_X,sphere_Y,sphere_Z,alpha=0.2,antialiased=True,color=plt_clrs[1])
-    ax.plot_wireframe(sphere_X,sphere_Y,sphere_Z,color=plt_clrs[1],linewidth=0.1)
+    ax.plot_surface(sphere_X,sphere_Y,sphere_Z,alpha=0.2,antialiased=True,color=color)
+    ax.plot_wireframe(sphere_X,sphere_Y,sphere_Z,color=color,linewidth=0.1)
 
 
 # ==============================[ DEPRECATED ]==================================

@@ -153,9 +153,9 @@ for conic in conics_forward+conics_backward:
 print(f"{len(conics)} conics identified as unique.")
 
 plt.imshow(data)
-for i,conic in enumerate(conics):
-    plt.plot(conic[0],conic[1],color='r')
-    np.save(os.path.join(export_dir,f"conic_{i}.npy"),conic)
+# for i,conic in enumerate(conics):
+#     plt.plot(conic[0],conic[1],color='r')
+#     np.save(os.path.join(export_dir,f"conic_{i}.npy"),conic)
 plt.show()
 
 
