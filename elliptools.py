@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 from genlib import plt_clrs
 from clrprint import printc
 from numpy import linalg as LA
+import math
 import cv2
 
 # =============================[ GENERAL GEOMETRY ]=============================
@@ -444,6 +445,7 @@ class Ellipse:
         con = 4 * eigvec[0]* eigvec[2] - eigvec[1]**2
         ak = eigvec[:, np.nonzero(con > 0)[0]]
         params = cart_to_pol(np.concatenate((ak, T @ ak)).ravel())
+
         self.x0, self.y0, self.a, self.b, self.phi = params
         self.c = sqrt(self.a**2-self.b**2)
 
@@ -619,6 +621,72 @@ class Ellipse:
         N = D @ c
         return np.sum(N**2)
 
+
+    def rotation_matrix(self):
+        """
+        Returns the rotation matrix for the ellipse's rotation.
+        """
+        a = math.cos(self.phi)
+        b = math.sin(self.phi)
+        return np.array([[a, -b], [b, a]])
+
+    def find_distance2(self, P, tolerance = 1e-8, max_iterations = 1000):
+        """
+        Finds the minimum distance between the specified point and the ellipse
+        using Newton's method.
+        """
+        x = np.asarray(P)
+        r = self.rotation_matrix()
+        x2 = np.dot(r.T, x - [self.x0, self.y0])
+        t = math.atan2(x2[1], x2[0])
+        a = self.a
+        b = self.b
+        
+        # If point is inside ellipse, generate better initial angle based on vertices
+        if (x2[0] / a)**2 + (x2[1] / b)**2 < 1:
+            ts = np.linspace(0, 2 * math.pi, 24, endpoint = False)
+            xe = a * np.cos(ts)
+            ye = b * np.sin(ts)
+            delta = x2 - np.column_stack([xe, ye])
+            t = ts[np.argmin(np.linalg.norm(delta, axis = 1))]
+            
+        iterations = 0
+        error = tolerance
+        errors = []
+        ts = []
+                
+        while error >= tolerance and iterations < max_iterations:
+            cost = math.cos(t)
+            sint = math.sin(t)
+            x1 = np.array([a * cost, b * sint])
+            xp = np.array([-a * sint, b * cost])
+            xpp = np.array([-a * cost, -b * sint])
+            delta = x1 - x2
+            dp = np.dot(xp, delta)
+            dpp = np.dot(xpp, delta) + np.dot(xp, xp)
+            t -= dp / dpp
+            error = abs(dp / dpp)
+            errors.append(error)
+            ts.append(t)
+            iterations += 1
+        
+        ts = np.array(ts)
+        errors = np.array(errors)
+        y = np.linalg.norm(x1 - x2)
+        success = error < tolerance and iterations < max_iterations
+        # return dict(x = t, y = y, error = error, iterations = iterations,
+        # success = success, xs = ts,  errors = errors)
+        return y
+
+
+    def getSOS2(self) -> float:
+
+        sos = 0
+        for x,y in zip(self.xData,self.yData):
+            sos += self.find_distance2((x,y))**2
+
+        return sos
+
     def print(self,f:int=2):
         printc("Ellipse: ",fw='b',fc='b',end="")
         printc(f"x0={self.x0:.{f}f}, y0={self.y0:.{f}f}, a={self.a:.{f}f}, b={self.b:.{f}f}, phi={self.phi:.{f}f} ({(self.phi*180/pi):.{f}f})°",fc='b')
@@ -648,7 +716,6 @@ def get_sum_of_squares(x:np.ndarray,y:np.ndarray,params) -> float:
     """
     Return sum os squares of the points (x_i,y_i) from the ellipse described by
     the 'params = x0, y0, a, b, phi'.
-    TODO: Sometimes it returns 1e66?!
     """
 
     c = pol_to_cart(params)

@@ -18,17 +18,13 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 theta = 30/180*pi
 
 # First, define an ellipse
-ellipse = el.Ellipse(x0=1,y0=0.5,a=1,b=0.6,phi=0.3,theta=theta)
-ellipse.print(f=5)
+ellipse = el.Ellipse(x0=0,y0=0,a=1,b=0.6,phi=0)
 
-# Now we find a cone to that ellipse
-cone = ellipse.findCone()
-cone.setColor(1)
-cone.print()
-
-# Confirmation: Find ellipse to the cone
-ellipse2 = cone.findEllipse()
-ellipse2.print(f=5)
+P = np.array([0.25,0.4])
+ellipse.setData(np.array([P[0]]),np.array([P[1]]))
+distP = ellipse.find_distance2(P)
+print(distP)
+print(ellipse.getSOS2())
 
 # -----[ Create the figure ]-----
 fig = plt.figure()
@@ -37,18 +33,10 @@ ax.set_proj_type('ortho',None) # persp,0.1
 
 # Plot the ellipse
 ellipse.plot(ax,plotAxes=True)
+plt.plot(P[0],P[1],'ro')
 
-# Plot the cone.
-# This functions call `Cone::getEllipse()` and plot cone properties according to
-# found ellipse. So 'FindEllipseToCone' and 'FindConeToEllipse' should be
-# consistent as this cone fits the ellipse.
-cone.plotMesh(ax,2,plotDandelin=True)
-cone.plotWireframe(ax,plotDandelin=True)
 
-# ax.view_init(90,-90,0) # Top view
-# ax.view_init(0,-90,0) # Side view
-# plt.show()
-
+ax.view_init(90,-90,0)
 ax.set_aspect('equal')
 plt.tight_layout()
 plt.show()
