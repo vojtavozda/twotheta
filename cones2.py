@@ -8,10 +8,13 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import importlib
 
-import ellipse as el
+import elliptools as ellt
 from genlib import plt_clrs
 
-importlib.reload(el)
+importlib.reload(ellt)
+
+# change current directory to the one where this script is located
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # ------------------------------------------------------------------------------
 # Calculate two theta angles
@@ -143,25 +146,30 @@ el_110   = move(rotate3D(el_110,phi,theta,psi),shift_x*base_x+shift_y*base_y+np.
 el_113   = move(rotate3D(el_113,phi,theta,psi),shift_x*base_x+shift_y*base_y+np.array((0,0,z0)))
 detector = move(rotate3D(detector,phi,theta,psi),shift_x*base_x+shift_y*base_y+np.array((0,0,z0)))
 
-params_012 = el.get_ellipse_from_cone(z0,n,two_theta_012)
-el012_x, el012_y = el.get_ellipse_pts(params_012)
+P = np.array([0,0,0])
+R = move(rotate3D(P,phi,theta,psi),shift_x*base_x+shift_y*base_y+np.array((0,0,z0)))
+print(f"R = {R}")
+
+# %%
+params_012 = ellt.get_ellipse_from_cone(z0,n,two_theta_012)
+el012_x, el012_y = ellt.get_ellipse_pts(params_012)
 el012_z = (n[2]*z0-n[0]*el012_x-n[1]*el012_y)/n[2]
-print("Sum of squares 012 =",el.get_sum_of_squares(el_012[0,:],el_012[1,:],params_012))
+print("Sum of squares 012 =",ellt.get_sum_of_squares(el_012[0,:],el_012[1,:],params_012))
 
-params_104 = el.get_ellipse_from_cone(z0,n,two_theta_104)
-el104_x, el104_y = el.get_ellipse_pts(params_104)
+params_104 = ellt.get_ellipse_from_cone(z0,n,two_theta_104)
+el104_x, el104_y = ellt.get_ellipse_pts(params_104)
 el104_z = (n[2]*z0-n[0]*el104_x-n[1]*el104_y)/n[2]
-print("Sum of squares 104 =",el.get_sum_of_squares(el_104[0,:],el_104[1,:],params_104))
+print("Sum of squares 104 =",ellt.get_sum_of_squares(el_104[0,:],el_104[1,:],params_104))
 
-params_110 = el.get_ellipse_from_cone(z0,n,two_theta_110)
-el110_x, el110_y = el.get_ellipse_pts(params_110)
+params_110 = ellt.get_ellipse_from_cone(z0,n,two_theta_110)
+el110_x, el110_y = ellt.get_ellipse_pts(params_110)
 el110_z = (n[2]*z0-n[0]*el110_x-n[1]*el110_y)/n[2]
-print("Sum of squares 110 =",el.get_sum_of_squares(el_110[0,:],el_110[1,:],params_110))
+print("Sum of squares 110 =",ellt.get_sum_of_squares(el_110[0,:],el_110[1,:],params_110))
 
-params_113 = el.get_ellipse_from_cone(z0,n,two_theta_113)
-el113_x, el113_y = el.get_ellipse_pts(params_113)
+params_113 = ellt.get_ellipse_from_cone(z0,n,two_theta_113)
+el113_x, el113_y = ellt.get_ellipse_pts(params_113)
 el113_z = (n[2]*z0-n[0]*el113_x-n[1]*el113_y)/n[2]
-print("Sum of squares 113 =",el.get_sum_of_squares(el_113[0,:],el_113[1,:],params_113))
+print("Sum of squares 113 =",ellt.get_sum_of_squares(el_113[0,:],el_113[1,:],params_113))
 
 plane_x = np.array([-600,600,600,-600,-600])
 plane_y = np.array([-300,-300,300,300,-300])
@@ -242,29 +250,29 @@ axs[0].view_init(90,-90,0)
 axs[0].set_proj_type('ortho',None)
 
 # ----- Plot 3D with projections in subplots -----
-# fig = plt.figure(figsize=(8,6))
+fig = plt.figure(figsize=(8,6))
 
-# gs = fig.add_gridspec(5,3)
-# axs = [plt.Axes]*4
-# axs[0] = plt.subplot(gs[:3,:], projection='3d')
-# axs[1] = plt.subplot(gs[3:,0], projection='3d')
-# axs[2] = plt.subplot(gs[3:,1], projection='3d')
-# axs[3] = plt.subplot(gs[3:,2], projection='3d')
+gs = fig.add_gridspec(5,3)
+axs = [plt.Axes]*4
+axs[0] = plt.subplot(gs[:3,:], projection='3d')
+axs[1] = plt.subplot(gs[3:,0], projection='3d')
+axs[2] = plt.subplot(gs[3:,1], projection='3d')
+axs[3] = plt.subplot(gs[3:,2], projection='3d')
 
-# plot_data(axs[1])
-# plot_data(axs[2])
-# plot_data(axs[3])
+plot_data(axs[1])
+plot_data(axs[2])
+plot_data(axs[3])
 
-# axs[1].view_init(90, -90)
-# axs[2].view_init( 0, -90)
-# axs[3].view_init( 0,   0)
+axs[1].view_init(90, -90)
+axs[2].view_init( 0, -90)
+axs[3].view_init( 0,   0)
 
 
-# for i in range(1,4):
-#     axs[i].set_proj_type('ortho',None)
-#     axs[i].set_xticklabels([])
-#     axs[i].set_yticklabels([])
-#     axs[i].set_zticklabels([])
+for i in range(1,4):
+    axs[i].set_proj_type('ortho',None)
+    axs[i].set_xticklabels([])
+    axs[i].set_yticklabels([])
+    axs[i].set_zticklabels([])
 
 plot_data(axs[0])
 axs[0].set_xlabel('x')
@@ -274,8 +282,7 @@ axs[0].set_zlabel('z')
 plt.tight_layout()
 plt.show()
 
-
-importlib.reload(el)
+# %%
 
 proj_012_x = (base_y[0]*el012_y-base_y[1]*el012_x)/(base_y[0]*base_x[1]-base_y[1]*base_x[0])
 proj_012_y = (el012_x-proj_012_x*base_x[0])/base_y[0]
@@ -327,7 +334,7 @@ for i,two_theta in enumerate(two_thetas):
     detector plane.
     """
     # Get parameters of an ellipse in xy plane
-    params = el.get_ellipse_from_cone(z0,n,two_theta/180*pi)
+    params = ellt.get_ellipse_from_cone(z0,n,two_theta/180*pi)
 
     a = params['a']
     b = params['b']
@@ -362,7 +369,7 @@ for i,two_theta in enumerate(two_thetas):
 
     # Join parameters of the projected ellipse
     proj_params = (proj_point_c[0],proj_point_c[1],proj_a,proj_b,proj_phi)
-    el_proj = np.array(el.get_ellipse_pts(proj_params,npts=500))
+    el_proj = np.array(ellt.get_ellipse_pts(proj_params,npts=500))
     if i%np.ceil(len(two_thetas)/30)==0:
         plt.plot(el_proj[0,:],el_proj[1,:],ls='--',c='w',lw=0.5)
 
@@ -375,7 +382,7 @@ for i,two_theta in enumerate(two_thetas):
         print("Warining: NaN or Inf in proj_params")
         intensities[i] = 0
     else:
-        intensities[i] = el.mask_sum(data,proj_params)
+        intensities[i] = ellt.mask_sum(data,proj_params)
 
 plt.xlim(0,1024)
 plt.ylim(0,512)

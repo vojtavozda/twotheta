@@ -4,7 +4,7 @@ import numpy as np
 from numpy import cos, sin, tan, pi
 from scipy import optimize
 from matplotlib import pyplot as plt
-import elliptools as el
+import elliptools as ellt
 
 # Calculate two theta angles
 energy = 5.932                  # [keV]
@@ -65,7 +65,7 @@ def objective(params):
     a = z0*sin(two_theta0)/2*(1/cos(two_theta0+delta)+1/cos(two_theta0-delta))
     b = z0*tan(two_theta0)
 
-    sum_of_squares += el.get_sum_of_squares(data0_x,data0_y,(cx,cy,a,b,phi))
+    sum_of_squares += ellt.get_sum_of_squares(data0_x,data0_y,(cx,cy,a,b,phi))
 
     # ---------------
 
@@ -79,7 +79,7 @@ def objective(params):
     a = z0*sin(two_theta2)/2*(1/cos(two_theta2+delta)+1/cos(two_theta2-delta))
     b = z0*tan(two_theta2)
 
-    sum_of_squares += el.get_sum_of_squares(data2_x,data2_y,(cx2,cy2,a,b,phi))
+    sum_of_squares += ellt.get_sum_of_squares(data2_x,data2_y,(cx2,cy2,a,b,phi))
 
     # ex,ey = el.get_ellipse_pts((cx,cy,a,b,phi))
 
@@ -106,7 +106,7 @@ cy = Vy
 a = z0*sin(two_theta0)/2*(1/cos(two_theta0+delta)+1/cos(two_theta0-delta))
 b = z0*tan(two_theta0)
 
-ex0,ey0 = el.get_ellipse_pts((cx,cy,1*a,b,1*phi))
+ex0,ey0 = ellt.get_ellipse_pts((cx,cy,1*a,b,1*phi))
 
 print(cx,cy,a,b,phi)
 
@@ -122,7 +122,7 @@ cx2,cy2 = rotate_point(cx2,cy2,cx,cy,phi)
 a = z0*sin(two_theta2)/2*(1/cos(two_theta2+delta)+1/cos(two_theta2-delta))
 b = z0*tan(two_theta2)
 
-ex2,ey2 = el.get_ellipse_pts((cx2,cy2,a,b,phi))
+ex2,ey2 = ellt.get_ellipse_pts((cx2,cy2,a,b,phi))
 
 # -----------------
 

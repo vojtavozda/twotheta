@@ -176,8 +176,8 @@ def objectiveMulti(params):
     n = np.array(params[3:])
     n = n/np.linalg.norm(n)
 
-    print(counter,end=" ")
-    # print(f"Apex:[{V[0]:.2f},{V[1]:.2f},{V[2]:.2f}] | n:[{n[0]:.2f},{n[1]:.2f},{n[2]:.2f}]",end="")
+    print(counter,end="| ")
+    print(f"V:[{V[0]:.2f},{V[1]:.2f},{V[2]:.2f}] | n:[{n[0]:.2f},{n[1]:.2f},{n[2]:.2f}]",end="")
 
     sos = 0
     fitEl012 = ellt.Cone(V,n,two_theta_012).getEllipse()
@@ -192,7 +192,7 @@ def objectiveMulti(params):
     fitEl110.setData(el110.xData,el110.yData)
     sos += fitEl110.getSOS2()
 
-    print(f" --> SOS:{sos}")
+    print(f" --> SOS:{sos:.2e}")
     counter += 1
 
     return sos
@@ -221,8 +221,13 @@ n = np.array([np.mean([cone012.n[0],cone104.n[0],cone110.n[0]]),
               np.mean([cone012.n[1],cone104.n[1],cone110.n[1]]),
               np.mean([cone012.n[2],cone104.n[2],cone110.n[2]])])
 n = n/np.linalg.norm(n)
-mCone = ellt.Cone(V,n,theta)
-mCone = cone012
+mCone = ellt.Cone(V,n,two_theta_012)
+ansatz = [1000,800,500,-0.7,0,-1.00]
+V = np.array(ansatz[:3])
+n = np.array(ansatz[3:])
+n = n/np.linalg.norm(n)
+mCone = ellt.Cone(V,n,two_theta_012)
+# mCone = cone012
 printc(f"[ANSATZ] ",fw='b',end='')
 mCone.print()
 
@@ -247,11 +252,12 @@ sos110_2 = ansatzEl110.getSOS2()
 sos = sos012 + sos104 + sos110
 sos_2 = sos012_2 + sos104_2 + sos110_2
 
-print(f"SOS: {sos:.2f} ({sos012:.2f}, {sos104:.2f}, {sos110:.2f})")
-print(f"SOS2: {sos_2:.2f} ({sos012_2:.2f}, {sos104_2:.2f}, {sos110_2:.2f})")
+print(f"SOS: {sos:.2e} ({sos012:.2e}, {sos104:.2e}, {sos110:.2e})")
+print(f"SOS2: {sos_2:.2e} ({sos012_2:.2e}, {sos104_2:.2e}, {sos110_2:.2e})")
 
 ansatz = [mCone.apex[0],mCone.apex[1],mCone.apex[2],mCone.n[0],mCone.n[1],mCone.n[2]]
-ansatz = [352.45,803.06,518.55,-0.01,-0.09,-1.00]
+ansatz = [1000,800,500,-0.7,0,-1.00]
+# ansatz = [1250,740,1000,-0.9,0.2,-0.4]
 
 # ----------------- [ Plot ansatz] -----------------
 V = np.array(ansatz[:3])
@@ -277,12 +283,15 @@ cone110 = ellt.Cone(V,n,two_theta_110,color=el110.clr)
 cone110.plotWireframe(ax)
 cone110.getEllipse().plot(ax,plotAxes=True)
 
+plt.xlim(-1000,1500)
+plt.ylim(-1000,1500)
 ax.set_aspect('equal')
 plt.show()
+# %%
 
 # ----------------- [ Optimize ] -----------------
 methods = ['Nelder-Mead','Powell','CG','BFGS','Newton-CG','L-BFGS-B','TNC','COBYLA','SLSQP','trust-const','dogleg','trust-ncg','trust-exact','trust-krylov']
-bounds = ((100,2000),(500,2000),(100,1000),(-0.5,0),(-1,0),(-1,0))
+bounds = ((100,2000),(500,1500),(100,1000),(-0.9,0),(-0.2,0.2),(-1,0))
 # constraints = [{'type': 'eq', 'fun': unitVectorConstraint}]
 # constraints = []
 
@@ -298,7 +307,7 @@ print(f"SOS: {res.fun:.4f}")
 V = np.array(res.x[:3])
 n = np.array(res.x[3:])
 n = n/np.linalg.norm(n)
-cone = ellt.Cone(V,n,theta,color=3)
+cone = ellt.Cone(V,n,two_theta_012,color=3)
 el = cone.getEllipse()
 printc("[RESULT] ",fw='b',end='')
 cone.print()
@@ -324,8 +333,8 @@ sos104_2 = resEl104.getSOS2()
 sos110_2 = resEl110.getSOS2()
 sos_2 = sos012_2 + sos104_2 + sos110_2
 
-print(f"SOS: {sos:.2f} ({sos012:.2f}, {sos104:.2f}, {sos110:.2f})")
-print(f"SOS2: {sos_2:.2f} ({sos012_2:.2f}, {sos104_2:.2f}, {sos110_2:.2f})")
+print(f"SOS: {sos:.2e} ({sos012:.2e}, {sos104:.2e}, {sos110:.2e})")
+print(f"SOS2: {sos_2:.2e} ({sos012_2:.2e}, {sos104_2:.2e}, {sos110_2:.2e})")
 
 print(resEl012._get_cartesian())
 print(resEl104._get_cartesian())

@@ -666,14 +666,14 @@ class Ellipse:
             dpp = np.dot(xpp, delta) + np.dot(xp, xp)
             t -= dp / dpp
             error = abs(dp / dpp)
-            errors.append(error)
-            ts.append(t)
+            # errors.append(error)
+            # ts.append(t)
             iterations += 1
         
-        ts = np.array(ts)
-        errors = np.array(errors)
+        # ts = np.array(ts)
+        # errors = np.array(errors)
         y = np.linalg.norm(x1 - x2)
-        success = error < tolerance and iterations < max_iterations
+        # success = error < tolerance and iterations < max_iterations
         # return dict(x = t, y = y, error = error, iterations = iterations,
         # success = success, xs = ts,  errors = errors)
         return y

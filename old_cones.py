@@ -10,7 +10,7 @@ import matplotlib
 # WebAgg
 # matplotlib.use('module://matplotlib_inline.backend_inline',force=False)
 from matplotlib import pyplot as plt
-import elliptools as el
+import elliptools as ellt
 from genlib import plt_clrs
 import genlib as gl
 from scipy import optimize
@@ -177,7 +177,7 @@ params = (283, 658, 486, 292, 0.27) # SVD fit of ellipse 0 ()
 # params = (955,  26,  55,   2, 0.40) # SVD fit of ellipse 7 ()
 # -------------------------------------------------------
 cx,cy,a,b,phi = params
-ex,ey = el.get_ellipse_pts(params)
+ex,ey = ellt.get_ellipse_pts(params)
 
 z0 = b/tan(two_theta)
 
@@ -248,7 +248,7 @@ cx2 = V2[0]-s2-z0*sin(delta)
 cy2 = V2[1]
 cx2,cy2 = rotate_point(cx2,cy2,cx,cy,phi)
 a2 = z0*sin(two_theta2)/2*(1/cos(two_theta2+delta)+1/cos(two_theta2-delta))
-ex2,ey2 = el.get_ellipse_pts((cx2,cy2,a2,b2,phi))
+ex2,ey2 = ellt.get_ellipse_pts((cx2,cy2,a2,b2,phi))
 
 # Calculate coordinates of rotated major axis
 Am2 = [cx2-a2,cy2,0]
@@ -291,9 +291,9 @@ ax.set_proj_type('ortho',None) # persp,0.1
 for i in range(8):
     x = np.load(os.path.join('data',f'x_{i}.npy'))
     y = np.load(os.path.join('data',f'y_{i}.npy'))
-    cart = el.fit_ellipse(x,y)
-    params = el.cart_to_pol(cart)
-    xel,yel = el.get_ellipse_pts(params)
+    cart = ellt.fit_ellipse(x,y)
+    params = ellt.cart_to_pol(cart)
+    xel,yel = ellt.get_ellipse_pts(params)
     ax.plot(xel,yel,np.zeros(len(xel)),ls='--',c='k',lw=0.5)
 
 # Plot cone --------------------------------------------------------------------

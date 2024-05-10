@@ -1,192 +1,88 @@
 
 # %%
 
-import math
+import os
 import numpy as np
-import matplotlib.pyplot as plt
-from numpy import sin, cos, pi, sqrt
+from numpy import sin, cos, tan, pi, sqrt
 import elliptools as ellt
+from matplotlib import pyplot as plt
 import importlib
+from clrprint import printc
+from genlib import plt_clrs
+from scipy import optimize
 importlib.reload(ellt)
 
-class Ellipse:
-    def __init__(self, x, y, width, height, angle = 0):
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-        self.angle = angle
-        
-    def rotation_matrix(self):
-        """
-        Returns the rotation matrix for the ellipse's rotation.
-        """
-        a = math.cos(self.angle)
-        b = math.sin(self.angle)
-        return np.array([[a, -b], [b, a]])
-    
-    def get_point(self, angle):
-        """
-        Returns the point on the ellipse at the specified local angle.
-        """
-        r = self.rotation_matrix()
-        xe = 0.5 * self.width * math.cos(angle)
-        ye = 0.5 * self.height * math.sin(angle)
-        return np.dot(r, [xe, ye]) + [self.x, self.y]
-    
-    def get_points(self, count):
-        """
-        Returns an array of points around the ellipse in the specified count.
-        """
-        t = np.linspace(0, 2 * math.pi, count)
-        xe = 0.5 * self.width * np.cos(t)
-        ye = 0.5 * self.height * np.sin(t)
-        r = self.rotation_matrix()
-        return np.dot(np.column_stack([xe, ye]), r.T) + [self.x, self.y]
-    
-    def find_distance1(self, x, tolerance = 1e-8, max_iterations = 10000, learning_rate = 0.01):
-        """
-        Finds the minimum distance between the specified point and the ellipse
-        using gradient descent.
-        """
-        x = np.asarray(x)
-        r = self.rotation_matrix()
-        x2 = np.dot(r.T, x - [self.x, self.y])
-        t = math.atan2(x2[1], x2[0])
-        a = 0.5 * self.width
-        b = 0.5 * self.height
-        iterations = 0
-        error = tolerance
-        errors = []
-        ts = []
-        
-        while error >= tolerance and iterations < max_iterations:
-            cost = math.cos(t)
-            sint = math.sin(t)
-            x1 = np.array([a * cost, b * sint])
-            xp = np.array([-a * sint, b * cost])
-            dp = 2 * np.dot(xp, x1 - x2)
-            t -= dp * learning_rate
-            error = abs(dp)
-            errors.append(error)
-            ts.append(t)
-            iterations += 1
-            
-        ts = np.array(ts)
-        errors = np.array(errors)
-        y = np.linalg.norm(x1 - x2)
-        success = error < tolerance and iterations < max_iterations
-        return dict(x = t, y = y, error = error, iterations = iterations, success = success, xs = ts,  errors = errors)
-    
-    def find_distance2(self, x, tolerance = 1e-8, max_iterations = 1000):
-        """
-        Finds the minimum distance between the specified point and the ellipse
-        using Newton's method.
-        """
-        x = np.asarray(x)
-        r = self.rotation_matrix()
-        x2 = np.dot(r.T, x - [self.x, self.y])
-        t = math.atan2(x2[1], x2[0])
-        a = 0.5 * self.width
-        b = 0.5 * self.height
 
-        print(t,a,b)
-        
-        # If point is inside ellipse, generate better initial angle based on vertices
-        if (x2[0] / a)**2 + (x2[1] / b)**2 < 1:
-            ts = np.linspace(0, 2 * math.pi, 24, endpoint = False)
-            xe = a * np.cos(ts)
-            ye = b * np.sin(ts)
-            delta = x2 - np.column_stack([xe, ye])
-            t = ts[np.argmin(np.linalg.norm(delta, axis = 1))]
-            
-        iterations = 0
-        error = tolerance
-        errors = []
-        ts = []
-                
-        while error >= tolerance and iterations < max_iterations:
-            cost = math.cos(t)
-            sint = math.sin(t)
-            x1 = np.array([a * cost, b * sint])
-            xp = np.array([-a * sint, b * cost])
-            xpp = np.array([-a * cost, -b * sint])
-            delta = x1 - x2
-            dp = np.dot(xp, delta)
-            dpp = np.dot(xpp, delta) + np.dot(xp, xp)
-            t -= dp / dpp
-            error = abs(dp / dpp)
-            errors.append(error)
-            ts.append(t)
-            iterations += 1
-        
-        ts = np.array(ts)
-        errors = np.array(errors)
-        y = np.linalg.norm(x1 - x2) # Distance
-        success = error < tolerance and iterations < max_iterations
-        return dict(x = t, y = y, error = error, iterations = iterations, success = success, xs = ts,  errors = errors)
-    
-    def getPoints(self,npts:int=100,tmin:float=0,tmax:float=2*pi) -> tuple:
-        """
-        Return npts points on the ellipse described by the
-        'params = x0, y0, a, b, phi'
-        for values of the parametric variable t between tmin and tmax (radians).
-        """
+# change current directory to the one where this script is located
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-        # A grid of the parametric variable, t.
-        t = np.linspace(tmin, tmax, npts)
-        x = self.x + self.width * cos(t) * cos(self.angle) - self.height * sin(t) * sin(self.angle)
-        y = self.y + self.width * cos(t) * sin(self.angle) + self.height * sin(t) * cos(self.angle)
-        return x, y
+# ------------------------------------------------------------------------------
+# Calculate two theta angles
+energy = 5.932                  # [keV]
+wavelength = 12.3985/energy     # [A]
+
+d_012 = 3.4662      # hkl 012 [A]
+d_104 = 2.5429      # hkl 104 [A]
+d_110 = 2.3730      # hkl 110 [A]
+d_113 = 2.0805      # hkl 113 [A]
+
+# Two theta calculation follows from Bragg's equation `lambda = 2*d*sin(theta)`
+two_theta_012 = 2*np.arcsin(wavelength/2/d_012)
+two_theta_104 = 2*np.arcsin(wavelength/2/d_104)
+two_theta_110 = 2*np.arcsin(wavelength/2/d_110)
+two_theta_113 = 2*np.arcsin(wavelength/2/d_113)
+
+data = np.load('data/data.npy')
+data[data>30] = 30
+data[data<0] = 0
+
+conic_012 = np.load('data/conic_012.npy')
+conic_104 = np.load('data/conic_104.npy')
+conic_110 = np.load('data/conic_110.npy')
+conic_113 = np.load('data/conic_113.npy')
+
+el012 = ellt.Ellipse(xData=conic_012[0],yData=conic_012[1],color=plt_clrs[0],theta=two_theta_012)
+el104 = ellt.Ellipse(xData=conic_104[0],yData=conic_104[1],color=plt_clrs[2],theta=two_theta_104)
+el110 = ellt.Ellipse(xData=conic_110[0],yData=conic_110[1],color=plt_clrs[3],theta=two_theta_110)
+
+el012.fit()
+el012.findCone()
+
+el104.fit()
+el104.findCone()
+
+el110.fit()
+el110.findCone()
+
+z0 = 1184.6707
+phi   = -1.0414    /180*pi
+theta = -32.5151     /180*pi
+psi   = -0.0541     /180*pi
+shift_x = -163.8418
+shift_y = -1029.1911
+P = np.array([-shift_x,-shift_y,z0])
+R = ellt.rotate3D(P,-phi,-theta,-psi)
+R = np.array([-144.28757645 ,-870.36951104 ,629.94872884])
+print(f"R = {R}")
+n = -R/np.linalg.norm(R)
+print(n)
+cone = ellt.Cone(R,n,two_theta_012)
 
 
-    def plot(self,
-             ax:plt.Axes,
-             color=None):
+fig = plt.figure()
+ax = fig.add_subplot(111,projection='3d')
+ax.set_proj_type('ortho',None) # persp,0.1
 
+plt.plot(conic_012[0],conic_012[1])
+plt.plot(conic_104[0],conic_104[1])
+plt.plot(conic_110[0],conic_110[1])
 
-        x,y = self.getPoints()
-        # Ellipse itself
-        ax.plot(x,y,color=color)
+plt.plot(R[0],R[1],R[2],'ro')
+cone.plotWireframe(ax)
+cone.getEllipse().plot(ax)
 
+# top view
+# ax.view_init(elev=90,azim=0)
+ax.set_aspect('equal')
+plt.show()
 
-# Generate random points
-size = 6
-np.random.seed(12345)
-points = np.random.rand(1, 2)
-points = size * points - size * (1 - points)
-points = np.append(points, [[0, 0]], axis = 0)
-
-# Ellipse definition
-ellipse = Ellipse(0, 0, 6, 10, np.deg2rad(15))
-
-solutions2 = [ellipse.find_distance2(x) for x in points]
-print(f"Method 2 Solutions Successful: {np.all([x['success'] for x in solutions2])}")
-
-
-fig = plt.figure(figsize=(7.5, 4.5))
-
-# Generate ellipse points
-ellipse_points = ellipse.get_points(100)
-
-
-# Method 2 Plot
-ax = fig.add_subplot(111,aspect = "equal")
-
-for solution, point in zip(solutions2, points):
-    x = np.array([ellipse.get_point(solution["x"]), point])
-    ax.plot(x[:,0], x[:,1])
-    
-ax.plot(points[:,0], points[:,1], "k.")
-ax.plot(ellipse_points[:,0], ellipse_points[:,1], "k-")
-
-P = np.array([1,1])
-distP = ellipse.find_distance2(P)
-plt.plot(P[0],P[1],'ro',markersize=10,markeredgecolor='k')
-P2 = ellipse.get_point(distP["x"])
-ax.plot(P2[0],P2[1],'yo',markersize=10,markeredgecolor='k')
-print(f"Distance: {sqrt((P2[0]-P[0])**2 + (P2[1]-P[1])**2)}")
-
-
-el2 = ellt.Ellipse(0,0,6/2,10/2,np.deg2rad(15))
-print(el2.find_distance2(P))

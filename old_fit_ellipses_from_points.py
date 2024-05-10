@@ -5,14 +5,14 @@ import numpy as np
 from numpy import pi, sin, cos
 from matplotlib import pyplot as plt
 from matplotlib import patches
-import elliptools as el
+import elliptools as ellt
 import importlib
 from scipy import optimize
 import genlib as gl
 
 # %% Fit two ellipses at once ==================================================
 
-importlib.reload(el)
+importlib.reload(ellt)
 
 def objective2(p:list,x1,y1,x2,y2) -> float:
 
@@ -26,8 +26,8 @@ def objective2(p:list,x1,y1,x2,y2) -> float:
     b2 = a2*r
 
     sos = 0
-    sos += el.get_sum_of_squares(x1,y1,[x0,y0,a1,b1,phi])
-    sos += el.get_sum_of_squares(x2,y2,[x0,y0,a2,b2,phi])
+    sos += ellt.get_sum_of_squares(x1,y1,[x0,y0,a1,b1,phi])
+    sos += ellt.get_sum_of_squares(x2,y2,[x0,y0,a2,b2,phi])
 
     return sos
 
@@ -48,8 +48,8 @@ print("Fit parameters:",res.x)
 print("Final SOS:",res.fun)
 x = res.x
 
-x1f,y1f = el.get_ellipse_pts([x[0],x[1],x[4],x[4]*x[3],x[2]])
-x2f,y2f = el.get_ellipse_pts([x[0],x[1],x[5],x[5]*x[3],x[2]])
+x1f,y1f = ellt.get_ellipse_pts([x[0],x[1],x[4],x[4]*x[3],x[2]])
+x2f,y2f = ellt.get_ellipse_pts([x[0],x[1],x[5],x[5]*x[3],x[2]])
 
 plt.plot(x1,y1,'.',markersize=5,ls='',c='b')
 plt.plot(x2,y2,'.',markersize=5,ls='',c='b')
@@ -77,7 +77,7 @@ plt.show()
 radii = np.arange(100,2000,2)
 ellipse_sums = np.zeros(len(radii))
 for i,r in enumerate(radii):
-    ellipse_sums[i] = el.mask_sum(data,x0,y0,r,axr,phi,w=1)
+    ellipse_sums[i] = ellt.mask_sum(data,x0,y0,r,axr,phi,w=1)
 radii = radii[ellipse_sums>0]
 ellipse_sums = ellipse_sums[ellipse_sums>0]
 plt.plot(radii,ellipse_sums)
@@ -88,14 +88,14 @@ plt.show()
 
 # %% Fit one ellipse ===========================================================
 
-importlib.reload(el)
+importlib.reload(ellt)
 
 def objective1(p:list,x:np.ndarray,y:np.ndarray) -> float:
 
-    sos = el.get_sum_of_squares(x,y,p)
+    sos = ellt.get_sum_of_squares(x,y,p)
     return sos
 
-x,y = el.get_ellipse_pts([100,100,90,40,0])
+x,y = ellt.get_ellipse_pts([100,100,90,40,0])
 
 x = np.load('data/x_5.npy')
 y = np.load('data/y_5.npy')
@@ -106,8 +106,8 @@ res = optimize.minimize(objective1,ansatz,args=(x,y),bounds=bounds)
 fit = res.x
 print("Fit parameters:",res.x)
 
-xf,yf = el.get_ellipse(res.x)
-print("Final SOS:",el.get_sum_of_squares(x,y,res.x),'=',res.fun)
+xf,yf = ellt.get_ellipse(res.x)
+print("Final SOS:",ellt.get_sum_of_squares(x,y,res.x),'=',res.fun)
 plt.plot(x,y,'.',markersize=10,ls='')
 plt.plot(xf,yf)
 plt.gca().axis('equal')
@@ -164,7 +164,7 @@ for i in range(len(x0)):
         plt.gca().add_patch(patches.Ellipse((fitA[0],fitA[1]),2*fitA[2],2*fitA[3],angle=fitA[4]*180/pi,color='red',fill=False,ls='--'))
         plt.gca().add_patch(patches.Ellipse((fitB[0],fitB[1]),2*fitB[2],2*fitB[3],angle=fitB[4]*180/pi,color='orange',fill=False,ls='--'))
         plt.gca().add_patch(patches.Ellipse((x0[i],y0[i]),2*a[i],2*b[i],angle=phi[i]*180/pi,color='green',fill=False))
-    ellipse_sums[i] = el.mask_sum(data,x0[i],y0[i],a[i],b[i]/a[i],phi[i],w=1)
+    ellipse_sums[i] = ellt.mask_sum(data,x0[i],y0[i],a[i],b[i]/a[i],phi[i],w=1)
 plt.show()
 
 plt.plot(ellipse_sums)
@@ -190,11 +190,11 @@ for i in range(N):
     plt.plot(x,y,'.',markersize=10,markeredgecolor=gl.plt_clrs[i])
     
     # Fit ellipse using SVD
-    cart = el.fit_ellipse(x,y)
-    params = el.cart_to_pol(cart)
+    cart = ellt.fit_ellipse(x,y)
+    params = ellt.cart_to_pol(cart)
     x0, y0, a, b, phi = params
     print(f'SVD: x0={x0:3.0f}, y0={y0:3.0f}, a={a:3.0f}, b={b:3.0f}, phi={phi:1.2f}')
-    xel,yel = el.get_ellipse_pts(params)
+    xel,yel = ellt.get_ellipse_pts(params)
     plt.plot(xel,yel,color=gl.plt_clrs[i])
     
     # Fit ellipse using scipy.optimize

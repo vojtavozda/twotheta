@@ -11,7 +11,7 @@ import matplotlib
 # WebAgg
 # matplotlib.use('module://matplotlib_inline.backend_inline',force=False)
 from matplotlib import pyplot as plt
-import elliptools as el
+import elliptools as ellt
 from genlib import plt_clrs
 import genlib as gl
 from scipy import optimize
@@ -113,7 +113,7 @@ params = (0, 0, 2, 1.5, 0.5)
 
 # -------------------------------------------------------
 cx,cy,a,b,phi = params
-ex,ey = el.get_ellipse_pts(params)
+ex,ey = ellt.get_ellipse_pts(params)
 
 z0 = b/tan(two_theta)
 

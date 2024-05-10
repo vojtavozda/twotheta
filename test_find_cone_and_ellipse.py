@@ -3,12 +3,12 @@
 import os
 import numpy as np
 from numpy import sin, cos, tan, pi, sqrt
-import elliptools as el
+import elliptools as ellt
 from matplotlib import pyplot as plt
 import importlib
 from clrprint import printc
 from genlib import plt_clrs
-importlib.reload(el)
+importlib.reload(ellt)
 
 
 # change current directory to the one where this script is located
@@ -18,7 +18,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 theta = 30/180*pi
 
 # First, define an ellipse
-ellipse = el.Ellipse(x0=1,y0=0.5,a=1,b=0.6,phi=0.3,theta=theta)
+ellipse = ellt.Ellipse(x0=1,y0=0.5,a=1,b=0.6,phi=0.3,theta=theta)
 ellipse.print(f=5)
 
 # Now we find a cone to that ellipse

@@ -16,10 +16,10 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from scipy import optimize
 import importlib
 
-import ellipse as el
+import elliptools as ellt
 from genlib import plt_clrs
 
-importlib.reload(el)
+importlib.reload(ellt)
 
 # ------------------------------------------------------------------------------
 # Calculate two theta angles
@@ -135,18 +135,18 @@ def objective(params):
     el_113_rot = move3D(rotate3D(el_113,phi,theta,psi),shift_x*base_x+shift_y*base_y+np.array((0,0,z0)))
 
     # Calculate parameters of ellipses at cones and plane intersection
-    params_012 = el.get_ellipse_from_cone(z0,n,two_theta_012)
-    params_104 = el.get_ellipse_from_cone(z0,n,two_theta_104)
-    params_110 = el.get_ellipse_from_cone(z0,n,two_theta_110)
-    params_113 = el.get_ellipse_from_cone(z0,n,two_theta_113)
+    params_012 = ellt.get_ellipse_from_cone(z0,n,two_theta_012)
+    params_104 = ellt.get_ellipse_from_cone(z0,n,two_theta_104)
+    params_110 = ellt.get_ellipse_from_cone(z0,n,two_theta_110)
+    params_113 = ellt.get_ellipse_from_cone(z0,n,two_theta_113)
     
     # print("params_012",params_012)
 
     # Compare found ellipses with experimental data
     sos = 0
-    sos += el.get_sum_of_squares(el_012_rot[0,:],el_012_rot[1,:],params_012)
-    sos += el.get_sum_of_squares(el_104_rot[0,:],el_104_rot[1,:],params_104)
-    sos += el.get_sum_of_squares(el_110_rot[0,:],el_110_rot[1,:],params_110)
+    sos += ellt.get_sum_of_squares(el_012_rot[0,:],el_012_rot[1,:],params_012)
+    sos += ellt.get_sum_of_squares(el_104_rot[0,:],el_104_rot[1,:],params_104)
+    sos += ellt.get_sum_of_squares(el_110_rot[0,:],el_110_rot[1,:],params_110)
     # sos += el.get_sum_of_squares(el_113_rot[0,:],el_113_rot[1,:],params_113)
     
     # print(f"z0={z0:.0f}, phi={phi*180/pi:.0f}, theta={theta*180/pi:.0f}, psi={psi*180/pi:.0f}, (x0,y0)=({shift_x:.0f},{shift_y:.0f}) | sos={sos:.0f}")
