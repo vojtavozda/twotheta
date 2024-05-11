@@ -135,19 +135,27 @@ def objective(params):
     el_113_rot = move3D(rotate3D(el_113,phi,theta,psi),shift_x*base_x+shift_y*base_y+np.array((0,0,z0)))
 
     # Calculate parameters of ellipses at cones and plane intersection
-    params_012 = ellt.get_ellipse_from_cone(z0,n,two_theta_012)
-    params_104 = ellt.get_ellipse_from_cone(z0,n,two_theta_104)
-    params_110 = ellt.get_ellipse_from_cone(z0,n,two_theta_110)
-    params_113 = ellt.get_ellipse_from_cone(z0,n,two_theta_113)
+    p012 = ellt.get_ellipse_from_cone(z0,n,two_theta_012)
+    p104 = ellt.get_ellipse_from_cone(z0,n,two_theta_104)
+    p110 = ellt.get_ellipse_from_cone(z0,n,two_theta_110)
+    p113 = ellt.get_ellipse_from_cone(z0,n,two_theta_113)
     
-    # print("params_012",params_012)
+    # print("params_012",p012)
+    fitEl012 = ellt.Ellipse(x0=p012['x0'],y0=p012['y0'],a=p012['a'],b=p012['b'],phi=p012['phi'],xData=el_012_rot[0,:],yData=el_012_rot[1,:],theta=two_theta_012)
+    fitEl104 = ellt.Ellipse(x0=p104['x0'],y0=p104['y0'],a=p104['a'],b=p104['b'],phi=p104['phi'],xData=el_104_rot[0,:],yData=el_104_rot[1,:],theta=two_theta_104)
+    fitEl110 = ellt.Ellipse(x0=p110['x0'],y0=p110['y0'],a=p110['a'],b=p110['b'],phi=p110['phi'],xData=el_110_rot[0,:],yData=el_110_rot[1,:],theta=two_theta_110)
+
+    sos = 0
+    sos += fitEl012.getSOS2()
+    sos += fitEl104.getSOS2()
+    sos += fitEl110.getSOS2()
 
     # Compare found ellipses with experimental data
-    sos = 0
-    sos += ellt.get_sum_of_squares(el_012_rot[0,:],el_012_rot[1,:],params_012)
-    sos += ellt.get_sum_of_squares(el_104_rot[0,:],el_104_rot[1,:],params_104)
-    sos += ellt.get_sum_of_squares(el_110_rot[0,:],el_110_rot[1,:],params_110)
-    # sos += el.get_sum_of_squares(el_113_rot[0,:],el_113_rot[1,:],params_113)
+    # sos = 0
+    # sos += ellt.get_sum_of_squares(el_012_rot[0,:],el_012_rot[1,:],p012)
+    # sos += ellt.get_sum_of_squares(el_104_rot[0,:],el_104_rot[1,:],p104)
+    # sos += ellt.get_sum_of_squares(el_110_rot[0,:],el_110_rot[1,:],p110)
+    # sos += el.get_sum_of_squares(el_113_rot[0,:],el_113_rot[1,:],p113)
     
     # print(f"z0={z0:.0f}, phi={phi*180/pi:.0f}, theta={theta*180/pi:.0f}, psi={psi*180/pi:.0f}, (x0,y0)=({shift_x:.0f},{shift_y:.0f}) | sos={sos:.0f}")
     
@@ -166,7 +174,8 @@ res = optimize.minimize(objective,ansatz,bounds=bounds,tol=1e-10)
 z0,phi,theta,psi,shift_x,shift_y = res.x
 
 print(f"SOS = {res.fun:.3f}")
-print("Calculated parameters:")
+print(f"Interactions = {res.nfev}")
+print(f"\n[Calculated parameters]")
 print(f"z0 = {z0:.4f}")
 print(f"phi = {phi*180/pi:.4f}°")
 print(f"theta = {theta*180/pi:.4f}°")
