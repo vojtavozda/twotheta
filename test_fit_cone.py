@@ -257,7 +257,8 @@ print(f"SOS2: {sos_2:.2e} ({sos012_2:.2e}, {sos104_2:.2e}, {sos110_2:.2e})")
 
 ansatz = [mCone.apex[0],mCone.apex[1],mCone.apex[2],mCone.n[0],mCone.n[1],mCone.n[2]]
 ansatz = [1000,800,500,-0.7,0,-1.00]
-# ansatz = [1250,740,1000,-0.9,0.2,-0.4]
+ansatz = [1033.95,747.66,515.09,-0.58,0.16,-0.80]
+ansatz = [-144.2875 ,-870.3695 ,629.9487, 0.133, 0.802,  -0.581]
 
 # ----------------- [ Plot ansatz] -----------------
 V = np.array(ansatz[:3])
@@ -292,13 +293,14 @@ plt.show()
 # ----------------- [ Optimize ] -----------------
 methods = ['Nelder-Mead','Powell','CG','BFGS','Newton-CG','L-BFGS-B','TNC','COBYLA','SLSQP','trust-const','dogleg','trust-ncg','trust-exact','trust-krylov']
 bounds = ((100,2000),(500,1500),(100,1000),(-0.9,0),(-0.2,0.2),(-1,0))
-# constraints = [{'type': 'eq', 'fun': unitVectorConstraint}]
+constraints = [{'type': 'eq', 'fun': unitVectorConstraint}]
 # constraints = []
 
 res = optimize.minimize(objectiveMulti,ansatz,
-                        method = methods[1],
+                        method = methods[5],
                         bounds=bounds,
-                        options={'maxiter': 100},tol=1e-6)
+                        constraints=constraints,
+                        options={'maxiter': 1e10},tol=100)
 printc(f"Performed ",end='')
 printc(f"{res.nfev} ",fw='b',end='')
 printc(f"iterations.")

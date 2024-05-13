@@ -96,11 +96,16 @@ class Cone:
 
         n = np.copy(self.n)
         theta = self.theta
+        # Calculate phi from n
+        
+
         # Find angle phi (rotation of ellipse semi-major axis from x-axis)
         phi = 0
         if n[0]!=0 or n[1]!=0:
-            phi = pi-np.arccos(n[0]/sqrt(n[0]**2+n[1]**2))
-        
+            phi = np.arccos(n[0]/sqrt(n[0]**2+n[1]**2))
+            phi = np.arctan2(n[1], n[0])
+            print(f"phi = {phi:.2f} ({phi*180/pi:.2f})°")
+
         # Find two vectors which point from apex to ends of semi-major axis
         n2 = rotate3D(n,phi,0,0)
         n3 = np.zeros(3)
@@ -116,6 +121,7 @@ class Cone:
 
         V = self.apex
         # Find semi-major axis end points
+        
         sM1 = np.array([V[0]-V[2]/n4[2]*n4[0],V[1]-V[2]/n4[2]*n4[1]])
         sM2 = np.array([V[0]-V[2]/n6[2]*n6[0],V[1]-V[2]/n6[2]*n6[1]])
         # Calculate semi-major axis length

@@ -77,12 +77,22 @@ plt.plot(conic_012[0],conic_012[1])
 plt.plot(conic_104[0],conic_104[1])
 plt.plot(conic_110[0],conic_110[1])
 
-plt.plot(R[0],R[1],R[2],'ro')
+# cone.plotWireframe(ax)
+# cone.getEllipse().plot(ax)
+cone.theta = two_theta_104
+cone.setColor(3)
+cone.plotMesh(ax,1000)
 cone.plotWireframe(ax)
-cone.getEllipse().plot(ax)
+cone.getEllipse().plot(ax,plotAxes=True)
 
+ax.set_xlim(-2000,2000)
+ax.set_ylim(-2000,2000)
+ax.set_zlim(0,1000)
+
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
 # top view
 # ax.view_init(elev=90,azim=0)
 ax.set_aspect('equal')
 plt.show()
-
