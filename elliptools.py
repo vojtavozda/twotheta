@@ -90,22 +90,6 @@ class Cone:
             raise ValueError("Color must be either int or str!")
         return self.clr
 
-    def parametric(self,t:float,a:float) -> np.ndarray:
-        """
-        Calculate the coordinates of a point on the cone at parameter t (0 to
-        inf) and a (0 to 2*pi).
-        """
-
-        # Vector u is pointing from apex to closest point of semi-major axis
-        u = np.array([0,0,0])
-        v = np.array([0,0,0])
-
-        x = self.apex[0] + ux*t*cos(a) + vx*t*sin(a)
-        y = self.apex[1] + uy*t*cos(a) + vy*t*sin(a)
-        z = self.apex[2] + uz*t*cos(a) + vz*t*sin(a)
-
-        return np.array([x,y,z])
-
     def getEllipse(self) -> Ellipse:
 
         """ """
@@ -120,7 +104,7 @@ class Cone:
         if n[0]!=0 or n[1]!=0:
             phi = np.arccos(n[0]/sqrt(n[0]**2+n[1]**2))
             phi = np.arctan2(n[1], n[0])
-            print(f"phi = {phi:.2f} ({phi*180/pi:.2f})°")
+            # print(f"phi = {phi:.2f} ({phi*180/pi:.2f})°")
 
         # Find two vectors which point from apex to ends of semi-major axis
         n2 = rotate3D(n,phi,0,0)

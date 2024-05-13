@@ -258,7 +258,7 @@ print(f"SOS2: {sos_2:.2e} ({sos012_2:.2e}, {sos104_2:.2e}, {sos110_2:.2e})")
 ansatz = [mCone.apex[0],mCone.apex[1],mCone.apex[2],mCone.n[0],mCone.n[1],mCone.n[2]]
 ansatz = [1000,800,500,-0.7,0,-1.00]
 ansatz = [1033.95,747.66,515.09,-0.58,0.16,-0.80]
-ansatz = [-144.2875 ,-870.3695 ,629.9487, 0.133, 0.802,  -0.581]
+# ansatz = [-144.2875 ,-870.3695 ,629.9487, 0.133, 0.802,  -0.581]
 
 # ----------------- [ Plot ansatz] -----------------
 V = np.array(ansatz[:3])
@@ -300,7 +300,7 @@ res = optimize.minimize(objectiveMulti,ansatz,
                         method = methods[5],
                         bounds=bounds,
                         constraints=constraints,
-                        options={'maxiter': 1e10},tol=100)
+                        options={'maxiter': 1e10},tol=1e-6)
 printc(f"Performed ",end='')
 printc(f"{res.nfev} ",fw='b',end='')
 printc(f"iterations.")
