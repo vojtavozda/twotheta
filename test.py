@@ -66,6 +66,7 @@ R = np.array([-144.28757645 ,-870.36951104 ,629.94872884])
 print(f"R = {R}")
 n = -R/np.linalg.norm(R)
 print(n)
+theta = two_theta_012
 cone = ellt.Cone(R,n,two_theta_012)
 
 

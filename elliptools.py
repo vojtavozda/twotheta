@@ -90,6 +90,22 @@ class Cone:
             raise ValueError("Color must be either int or str!")
         return self.clr
 
+    def parametric(self,t:float,a:float) -> np.ndarray:
+        """
+        Calculate the coordinates of a point on the cone at parameter t (0 to
+        inf) and a (0 to 2*pi).
+        """
+
+        # Vector u is pointing from apex to closest point of semi-major axis
+        u = np.array([0,0,0])
+        v = np.array([0,0,0])
+
+        x = self.apex[0] + ux*t*cos(a) + vx*t*sin(a)
+        y = self.apex[1] + uy*t*cos(a) + vy*t*sin(a)
+        z = self.apex[2] + uz*t*cos(a) + vz*t*sin(a)
+
+        return np.array([x,y,z])
+
     def getEllipse(self) -> Ellipse:
 
         """ """
@@ -118,6 +134,16 @@ class Cone:
         n5[1] = n2[1]
         n5[2] = -n2[0]*sin(theta)+n2[2]*cos(theta)
         n6 = rotate3D(n5,-phi,0,0)
+
+        # print(f"n4 = {n4}")
+        # print(f"n6 = {n6}")
+        if n4[2]==0 or n6[2]==0:
+            printc(f"Not ellipse but parabola!",tag='e')
+            # raise ValueError("Not ellipse but parabola!")
+        elif n4[2]>0 or n6[2]>0:
+            printc(f"Not ellipse but hyperbola!",tag='e')
+            # raise ValueError("Not ellipse but hyperbola!")
+
 
         V = self.apex
         # Find semi-major axis end points

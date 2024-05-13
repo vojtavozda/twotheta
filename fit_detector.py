@@ -146,9 +146,9 @@ def objective(params):
     fitEl110 = ellt.Ellipse(x0=p110['x0'],y0=p110['y0'],a=p110['a'],b=p110['b'],phi=p110['phi'],xData=el_110_rot[0,:],yData=el_110_rot[1,:],theta=two_theta_110)
 
     sos = 0
-    sos += fitEl012.getSOS2()
-    sos += fitEl104.getSOS2()
-    sos += fitEl110.getSOS2()
+    sos += fitEl012.getSOS()
+    sos += fitEl104.getSOS()
+    sos += fitEl110.getSOS()
 
     # Compare found ellipses with experimental data
     # sos = 0
