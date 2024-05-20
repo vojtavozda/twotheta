@@ -26,10 +26,10 @@ d_110 = 2.3730      # hkl 110 [A]
 d_113 = 2.0805      # hkl 113 [A]
 
 # Two theta calculation follows from Bragg's equation `lambda = 2*d*sin(theta)`
-two_theta_012 = 2*np.arcsin(wavelength/2/d_012)
-two_theta_104 = 2*np.arcsin(wavelength/2/d_104)
-two_theta_110 = 2*np.arcsin(wavelength/2/d_110)
-two_theta_113 = 2*np.arcsin(wavelength/2/d_113)
+two_theta_012 = 2*np.arcsin(wavelength/2/d_012) # 0.6125
+two_theta_104 = 2*np.arcsin(wavelength/2/d_104) # 0.8470
+two_theta_110 = 2*np.arcsin(wavelength/2/d_110) # 0.9121
+two_theta_113 = 2*np.arcsin(wavelength/2/d_113) # 1.0525
 
 data = np.load('data/data.npy')
 data[data>30] = 30

@@ -1,65 +1,58 @@
 # %%
 
+# Notes:
+# ======
+# 1) How to obtain a poni file:
+# -----------------------------
+# See video tutorial at:
+# https://pyfai.readthedocs.io/en/v2023.1/usage/cookbook/calib-gui/index.html
+# - install packages: `pip install pyfai fabio pyqt5 PyOpenGL`
+# - open pyFAI GUI using `pyFAI-calib2`
+# - set energy to 5.932 keV
+# - calibrant is Al2O3
+# - define custom detector (512x1024px, pixel 1um)
+# - load some image with rings for geometry calibration (*.npy)
+# - define mask (used mainly for peak picking)
+# - inside peak picking, correct ring number must be selected (old data have
+#   rings 1, 2, 3, 5 - 4 is missing!)
+# - fit the geometry and save the poni file
+#
+# 2) Perform 1D and 2D integration:
+# ---------------------------------
+# - load data and poni file (-> AzimuthalIntegrator)
+# - use methods of AzimuthalIntegrator to perform 1D and 2D integration
+
+
+import os
 import sys
-from matplotlib import pyplot
+from matplotlib import pyplot as plt
 from pyFAI.utils.ellipse import fit_ellipse
 import inspect
 from matplotlib import patches
 from numpy import rad2deg
+import pyFAI
+import fabio
 
-def display(ptx, pty, ellipse=None):
-    """A function to overlay a set of points and the calculated ellipse
-    """
-    fig = pyplot.figure()
-    ax = fig.add_subplot(111)
-    if ellipse is not None:
-        error = False
-        y0, x0, angle, wlong, wshort = ellipse
-        if wshort == 0:
-            error = True
-            wshort = 0.0001
-        if wlong == 0:
-            error = True
-            wlong = 0.0001
-        patch = patches.Arc((x0, y0), width=wlong*2, height=wshort*2, angle=rad2deg(angle))
-        if error:
-            patch.set_color("red")
-        else:
-            patch.set_color("green")
-        ax.add_patch(patch)
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-        bbox = patch.get_window_extent()
-        ylim = min(y0 - wlong, pty.min()), max(y0 + wlong, pty.max())
-        xlim = min(x0 - wlong, ptx.min()), max(x0 - wlong, ptx.max())
-    else:
-        ylim = pty.min(), pty.max()
-        xlim = ptx.min(), ptx.max()
-    ax.plot(ptx, pty, "ro", color="blue")
-    ax.set_xlim(*xlim)
-    ax.set_ylim(*ylim)
-    pyplot.show()
+filepath = os.path.join("p2838","JF3_run135.npy")
+data = fabio.open(filepath).data
+data[data<0] = 0
+data[data>20] = 20
 
-from numpy import sin, cos, random, pi, linspace
-arc = 0.8
-npt = 100
-R = linspace(0, arc * pi, npt)
-ptx = 1.5 * cos(R) + 2 + random.normal(scale=0.05, size=npt)
-pty = sin(R) + 1. + random.normal(scale=0.05, size=npt)
+ponipath = os.path.join("p2838","fit.poni")
+ai = pyFAI.load(ponipath)
 
-ellipse = fit_ellipse(pty, ptx)
-print(ellipse)
-display(ptx, pty, ellipse)
+res1D = ai.integrate1d_ng(data,1024,unit="2th_deg")
+res2D = ai.integrate2d_ng(data,1024,360,unit="2th_deg")
 
-angles = linspace(0, pi / 2, 10)
-pty = sin(angles) * 20 + 10
-ptx = cos(angles) * 20 + 10
-ellipse = fit_ellipse(pty, ptx)
-print(ellipse)
-display(ptx, pty, ellipse)
+plt.imshow(data)
+plt.show()
+plt.imshow(res2D[0],extent=[res2D[1].min(),res2D[1].max(),res2D[2].min(),res2D[2].max()])
+# set axpect NOT to be equal
+plt.gca().set_aspect('auto')
 
-angles = linspace(0, pi * 2, 6, endpoint=False)
-pty = sin(angles) * 10 + 50
-ptx = cos(angles) * 20 + 100
-ellipse = fit_ellipse(pty, ptx)
-print(ellipse)
-display(ptx, pty, ellipse)
+plt.show()
+plt.plot(res1D[0],res1D[1])
+plt.show()
+# %%
